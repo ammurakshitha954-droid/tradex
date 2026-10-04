@@ -3,35 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TradeX // Next-Gen Intelligent Trading Platform</title>
+  <title>TRADEX — Professional Trading Terminal + AI Decision Support</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- TradingView Lightweight Charts CDN -->
+  <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           colors: {
-            kite: {
-              bg: "#0c1017",
-              sidebar: "#090d14",
-              card: "#101622",
-              border: "#1a2233",
-              borderLight: "#243047",
-              blue: "#387ed1",
-              blueHover: "#2d6bb3",
-              orange: "#f65026",
-              orangeHover: "#dc421a",
-              green: "#00a25b",
+            tradex: {
+              black: "#070a0e",
+              bg: "#0a0e14",
+              sidebar: "#0d1118",
+              surface: "#111722",
+              surfaceRaised: "#161e2c",
+              border: "#1a2332",
+              borderHover: "#28354d",
+              green: "#00c076",
+              greenMuted: "rgba(0, 192, 118, 0.12)",
               red: "#eb455f",
-              textMuted: "#738096",
-              textLight: "#e2e8f0"
+              redMuted: "rgba(235, 69, 95, 0.12)",
+              amber: "#f59e0b",
+              blue: "#387ed1",
+              muted: "#6b7a90",
+              text: "#e1e7f0",
+              textDim: "#94a3b8"
             }
           },
           fontFamily: {
-            sans: ['Inter', 'sans-serif'],
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
             mono: ['JetBrains Mono', 'monospace'],
           }
         }
@@ -39,341 +44,413 @@
     }
   </script>
   <style>
-    body { background-color: #0c1017; color: #e2e8f0; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #090d14; }
-    ::-webkit-scrollbar-thumb { background: #1f2a3e; border-radius: 2px; }
-    ::-webkit-scrollbar-thumb:hover { background: #2f3e5c; }
-    .watchlist-item:hover .watchlist-actions { display: flex; }
-    .active-kite-tab { border-bottom: 2px solid #f65026; color: #f65026 !important; font-weight: 600; }
-    .active-watchlist-tab { color: #f65026 !important; font-weight: 700; border-bottom: 2px solid #f65026; }
-    .badge-glow { box-shadow: 0 0 15px rgba(246, 80, 38, 0.25); }
+    body { background-color: #070a0e; color: #e1e7f0; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: #0a0e14; }
+    ::-webkit-scrollbar-thumb { background: #1c2738; border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2a3a54; }
+    .terminal-tab-active { color: #00c076 !important; border-bottom: 2px solid #00c076; font-weight: 600; }
+    .watchlist-row:hover { background-color: #121926; }
+    .watchlist-row.selected { background-color: #141c2b; border-left: 2px solid #00c076; }
+    .nav-link.active { color: #00c076; font-weight: 600; border-bottom: 2px solid #00c076; }
+    .badge-approved { background: rgba(0, 192, 118, 0.15); color: #00c076; border: 1px solid rgba(0, 192, 118, 0.35); }
+    .badge-reduce { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35); }
+    .badge-reject { background: rgba(235, 69, 95, 0.15); color: #eb455f; border: 1px solid rgba(235, 69, 95, 0.35); }
   </style>
 </head>
 <body class="flex flex-col h-screen select-none text-xs">
 
-  <!-- ==================== LOGIN MODAL SCREEN (ZERODHA STYLE) ==================== -->
-  <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm">
-    <div class="w-full max-w-md bg-[#101622] border border-[#1e283b] rounded-xl shadow-2xl p-8 space-y-6">
-      
-      <!-- Logo & Brand Header -->
-      <div class="text-center space-y-2">
-        <div class="flex items-center justify-center space-x-2">
-          <div class="w-8 h-8 rounded bg-gradient-to-tr from-[#f65026] to-[#ff7a50] flex items-center justify-center text-white font-black text-base shadow-lg shadow-orange-500/20">
-            X
-          </div>
-          <span class="text-2xl font-black tracking-tight text-white font-mono">Trade<span class="text-[#f65026]">X</span></span>
-        </div>
-        <p class="text-xs text-slate-400">Institutional Decision Intelligence & Execution Platform</p>
-      </div>
-
-      <!-- Login Step 1: User ID & Password -->
-      <div id="login-step-1" class="space-y-4">
-        <div class="space-y-1">
-          <label class="text-[11px] font-semibold text-slate-300">User ID</label>
-          <input id="login-userid" type="text" value="RK8920" class="w-full bg-[#0a0e16] border border-[#1f2b40] rounded px-3 py-2 text-white focus:outline-none focus:border-[#387ed1] transition font-mono uppercase text-sm">
-        </div>
-        <div class="space-y-1">
-          <label class="text-[11px] font-semibold text-slate-300">Password</label>
-          <input id="login-password" type="password" value="TradeXPass2026!" class="w-full bg-[#0a0e16] border border-[#1f2b40] rounded px-3 py-2 text-white focus:outline-none focus:border-[#387ed1] transition text-sm">
-        </div>
-        
-        <button onclick="goToStep2()" class="w-full bg-[#f65026] hover:bg-[#e0451d] text-white font-semibold py-2.5 rounded transition shadow-lg shadow-orange-500/10 text-sm">
-          Continue
-        </button>
-
-        <div class="flex justify-between items-center text-[11px] text-slate-400 pt-1">
-          <a href="#" class="hover:text-slate-200">Forgot user ID or password?</a>
-          <span class="text-emerald-400 font-mono">2FA Protected</span>
-        </div>
-      </div>
-
-      <!-- Login Step 2: 2FA TOTP / Mobile PIN -->
-      <div id="login-step-2" class="space-y-5 hidden">
-        <div class="text-center space-y-1">
-          <div class="text-sm font-bold text-white">Two-Factor Authentication (2FA)</div>
-          <div class="text-[11px] text-slate-400">Enter the 6-digit TOTP / Mobile App PIN for <span class="font-mono text-white font-bold" id="display-user">RK8920</span></div>
-        </div>
-
-        <div class="flex justify-center space-x-2 font-mono">
-          <input type="text" maxlength="1" value="8" class="otp-box w-10 h-12 bg-[#090d14] border border-slate-700 text-center text-lg text-white font-bold rounded focus:border-[#387ed1] focus:outline-none">
-          <input type="text" maxlength="1" value="4" class="otp-box w-10 h-12 bg-[#090d14] border border-slate-700 text-center text-lg text-white font-bold rounded focus:border-[#387ed1] focus:outline-none">
-          <input type="text" maxlength="1" value="2" class="otp-box w-10 h-12 bg-[#090d14] border border-slate-700 text-center text-lg text-white font-bold rounded focus:border-[#387ed1] focus:outline-none">
-          <input type="text" maxlength="1" value="9" class="otp-box w-10 h-12 bg-[#090d14] border border-slate-700 text-center text-lg text-white font-bold rounded focus:border-[#387ed1] focus:outline-none">
-          <input type="text" maxlength="1" value="1" class="otp-box w-10 h-12 bg-[#090d14] border border-slate-700 text-center text-lg text-white font-bold rounded focus:border-[#387ed1] focus:outline-none">
-          <input type="text" maxlength="1" value="0" class="otp-box w-10 h-12 bg-[#090d14] border border-slate-700 text-center text-lg text-white font-bold rounded focus:border-[#387ed1] focus:outline-none">
-        </div>
-
-        <button onclick="completeLogin()" class="w-full bg-[#387ed1] hover:bg-[#2d6bb3] text-white font-semibold py-2.5 rounded transition text-sm">
-          Verify & Launch TradeX
-        </button>
-
-        <div class="text-center">
-          <button onclick="backToStep1()" class="text-[11px] text-slate-400 hover:text-white underline">Back to Login</button>
-        </div>
-      </div>
-
-      <!-- Quick 1-Click Demo Login -->
-      <div class="pt-4 border-t border-[#1a2336] text-center space-y-2">
-        <button onclick="quickDemoLogin()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 py-2 rounded text-xs transition flex items-center justify-center space-x-2">
-          <span>⚡ One-Click Instant Demo Login (Rakshitha T R)</span>
-        </button>
-        <p class="text-[10px] text-slate-500 font-mono">SEBI / SEC Regulated Simulation Node // Ver 2.4</p>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ==================== TOP NAVIGATION BAR (ZERODHA KITE STYLE) ==================== -->
-  <header class="h-12 bg-[#090d14] border-b border-[#1a2336] flex items-center justify-between px-4 z-40 shrink-0">
+  <!-- ==================== 1. TOP HEADER ==================== -->
+  <header class="h-11 bg-[#090d13] border-b border-[#182130] flex items-center justify-between px-3 z-50 shrink-0 font-sans">
     
-    <!-- Left: TradeX Brand & Indices Ticker -->
+    <!-- Left: Brand + Navigation Links -->
     <div class="flex items-center space-x-6">
-      <!-- Brand Logo -->
-      <div class="flex items-center space-x-2 cursor-pointer" onclick="switchKiteTab('dashboard')">
-        <div class="w-6 h-6 rounded bg-[#f65026] flex items-center justify-center text-white font-black text-xs shadow-md">
-          X
+      
+      <!-- Brand Logo: TRADEX -->
+      <div class="flex items-center space-x-2 cursor-pointer" onclick="switchView('dashboard')">
+        <div class="w-6 h-6 rounded bg-[#00c076] flex items-center justify-center text-black font-black text-xs font-mono shadow-sm">
+          TX
         </div>
-        <span class="text-base font-black tracking-tight text-white font-mono">Trade<span class="text-[#f65026]">X</span></span>
-      </div>
-
-      <!-- Indices Ribbon -->
-      <div class="hidden md:flex items-center space-x-4 font-mono text-[11px] border-l border-slate-800 pl-4">
-        <div class="flex items-center space-x-1.5">
-          <span class="text-slate-400 uppercase">NIFTY 50</span>
-          <span class="text-white font-semibold">24,852.15</span>
-          <span class="text-[#00a25b]">+142.30 (+0.58%)</span>
-        </div>
-        <div class="flex items-center space-x-1.5">
-          <span class="text-slate-400 uppercase">SENSEX</span>
-          <span class="text-white font-semibold">81,340.20</span>
-          <span class="text-[#00a25b]">+412.80 (+0.51%)</span>
-        </div>
-        <div class="flex items-center space-x-1.5">
-          <span class="text-slate-400 uppercase">SPY</span>
-          <span class="text-white font-semibold">584.20</span>
-          <span class="text-[#00a25b]">+3.10 (+0.53%)</span>
+        <div class="flex items-baseline space-x-1">
+          <span class="text-sm font-black tracking-wider text-white font-mono">TRADEX</span>
+          <span class="text-[9px] font-mono text-[#00c076] uppercase tracking-widest font-bold">TERMINAL</span>
         </div>
       </div>
-    </div>
 
-    <!-- Center/Right: Kite Navigation Tabs & User Profile -->
-    <div class="flex items-center space-x-5 font-mono">
-      <nav class="flex items-center space-x-1 text-slate-300">
-        <button id="tab-nav-dashboard" onclick="switchKiteTab('dashboard')" class="px-3 py-3 hover:text-white transition active-kite-tab">Dashboard</button>
-        <button id="tab-nav-orders" onclick="switchKiteTab('orders')" class="px-3 py-3 hover:text-white transition">Orders</button>
-        <button id="tab-nav-holdings" onclick="switchKiteTab('holdings')" class="px-3 py-3 hover:text-white transition">Holdings</button>
-        <button id="tab-nav-positions" onclick="switchKiteTab('positions')" class="px-3 py-3 hover:text-white transition">Positions</button>
-        <button id="tab-nav-funds" onclick="switchKiteTab('funds')" class="px-3 py-3 hover:text-white transition">Funds</button>
-        <button id="tab-nav-ai" onclick="switchKiteTab('ai')" class="px-3 py-1.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:text-purple-200 transition flex items-center space-x-1.5">
-          <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
-          <span class="font-bold">AI Intelligence</span>
-        </button>
+      <!-- Main Navigation Menu -->
+      <nav class="hidden md:flex items-center space-x-1 font-mono text-xs text-slate-300">
+        <button id="nav-dashboard" onclick="switchView('dashboard')" class="px-2.5 py-3 hover:text-white transition nav-link active">Dashboard</button>
+        <button id="nav-positions" onclick="switchView('positions')" class="px-2.5 py-3 hover:text-white transition nav-link">Positions</button>
+        <button id="nav-orders" onclick="switchView('orders')" class="px-2.5 py-3 hover:text-white transition nav-link">Orders</button>
+        <button id="nav-holdings" onclick="switchView('holdings')" class="px-2.5 py-3 hover:text-white transition nav-link">Holdings</button>
+        <button id="nav-debate" onclick="switchView('debate')" class="px-2.5 py-3 hover:text-white transition nav-link">AI Debate</button>
+        <button id="nav-replay" onclick="switchView('replay')" class="px-2.5 py-3 hover:text-white transition nav-link">Decision Replay</button>
+        <button id="nav-portfolio" onclick="switchView('portfolio')" class="px-2.5 py-3 hover:text-white transition nav-link">Portfolio & Risk</button>
+        <button id="nav-research" onclick="switchView('research')" class="px-2.5 py-3 hover:text-white transition nav-link">Research & Ablation</button>
       </nav>
 
-      <!-- User Profile Dropdown -->
-      <div class="relative flex items-center space-x-2 pl-3 border-l border-slate-800">
-        <button onclick="toggleUserDropdown()" class="flex items-center space-x-2 hover:opacity-80 transition focus:outline-none">
-          <div class="w-6 h-6 rounded-full bg-[#f65026] text-white flex items-center justify-center font-bold text-[10px]">
-            RT
-          </div>
-          <span id="user-header-id" class="text-slate-200 font-bold text-xs">RK8920</span>
-          <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-        </button>
+    </div>
 
-        <!-- Dropdown Menu -->
-        <div id="user-dropdown" class="absolute right-0 top-10 w-48 bg-[#101622] border border-[#1e283b] rounded-lg shadow-xl py-2 hidden z-50 text-[11px] font-sans">
-          <div class="px-4 py-2 border-b border-slate-800">
-            <div class="font-bold text-white" id="dropdown-name">Rakshitha T R</div>
-            <div class="text-slate-400 text-[10px]" id="dropdown-email">rakshitha@tradex.internal</div>
-          </div>
-          <a href="/project-document" target="_blank" class="block px-4 py-2 text-slate-300 hover:bg-[#1a2336] hover:text-white transition">Full Project Document</a>
-          <a href="/docs" target="_blank" class="block px-4 py-2 text-slate-300 hover:bg-[#1a2336] hover:text-white transition">OpenAPI Reference</a>
-          <a href="/download/project-zip" class="block px-4 py-2 text-emerald-400 hover:bg-[#1a2336] transition">Download Project (.zip)</a>
-          <div class="border-t border-slate-800 my-1"></div>
-          <button onclick="logout()" class="w-full text-left px-4 py-2 text-rose-400 hover:bg-[#1a2336] transition">Log out</button>
+    <!-- Center: Global Search -->
+    <div class="flex-1 max-w-sm mx-4">
+      <div class="relative">
+        <input id="global-search" type="text" placeholder="Search instrument, symbol, index (e.g. NVDA, RELIANCE, NIFTY)..." oninput="handleGlobalSearch(this.value)" class="w-full bg-[#101622] border border-[#1b2536] rounded px-3 py-1 text-[11px] text-white placeholder-slate-500 focus:outline-none focus:border-[#00c076] font-mono transition">
+        <span class="absolute right-2 top-1.5 text-[9px] text-slate-500 font-mono">⌘K</span>
+      </div>
+    </div>
+
+    <!-- Right: Telemetry & User Controls -->
+    <div class="flex items-center space-x-3 text-xs font-mono">
+      
+      <!-- Market & AI Status Badges -->
+      <div class="hidden lg:flex items-center space-x-2 text-[10px]">
+        <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>MARKET LIVE</span>
+        </span>
+        <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/30 flex items-center space-x-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+          <span>AI COUNCIL ONLINE</span>
+        </span>
+      </div>
+
+      <!-- System Health Quick Button -->
+      <button onclick="switchView('system')" class="px-2 py-1 rounded bg-[#121824] hover:bg-[#182234] text-slate-300 text-[10px] border border-[#1d273a] transition" title="System Health & Developer Telemetry">
+        Health
+      </button>
+
+      <!-- User Account Pill -->
+      <div class="flex items-center space-x-1.5 pl-2 border-l border-slate-800">
+        <div class="w-5 h-5 rounded bg-[#182336] text-[#00c076] flex items-center justify-center font-bold text-[10px]">
+          TX
         </div>
+        <span class="text-slate-200 font-bold text-[11px]">RK8920</span>
       </div>
 
     </div>
 
   </header>
 
-  <!-- ==================== BODY WRAPPER: WATCHLIST (LEFT) + WORKSPACE (RIGHT) ==================== -->
-  <div class="flex flex-1 overflow-hidden">
+  <!-- ==================== 2. COMPACT MARKET TICKER ==================== -->
+  <div class="h-7 bg-[#0b0f16] border-b border-[#161f2d] flex items-center px-3 space-x-5 text-[11px] font-mono overflow-x-auto whitespace-nowrap shrink-0">
+    <div class="flex items-center space-x-1.5">
+      <span class="text-slate-400 uppercase font-semibold">NIFTY 50</span>
+      <span class="text-white font-bold">24,852.15</span>
+      <span class="text-[#00c076] font-semibold">+142.30 (+0.58%)</span>
+    </div>
+    <span class="text-slate-700">|</span>
+    <div class="flex items-center space-x-1.5">
+      <span class="text-slate-400 uppercase font-semibold">BANK NIFTY</span>
+      <span class="text-white font-bold">51,210.45</span>
+      <span class="text-[#00c076] font-semibold">+218.10 (+0.43%)</span>
+    </div>
+    <span class="text-slate-700">|</span>
+    <div class="flex items-center space-x-1.5">
+      <span class="text-slate-400 uppercase font-semibold">SENSEX</span>
+      <span class="text-white font-bold">81,340.20</span>
+      <span class="text-[#00c076] font-semibold">+412.80 (+0.51%)</span>
+    </div>
+    <span class="text-slate-700">|</span>
+    <div class="flex items-center space-x-1.5">
+      <span class="text-slate-400 uppercase font-semibold">INDIA VIX</span>
+      <span class="text-white font-bold">12.85</span>
+      <span class="text-[#eb455f] font-semibold">-0.42 (-3.16%)</span>
+    </div>
+    <span class="text-slate-700">|</span>
+    <div class="flex items-center space-x-1.5">
+      <span class="text-slate-400 uppercase font-semibold">SPY</span>
+      <span class="text-white font-bold">584.20</span>
+      <span class="text-[#00c076] font-semibold">+3.10 (+0.53%)</span>
+    </div>
+    <span class="text-slate-700">|</span>
+    <div class="flex items-center space-x-1.5">
+      <span class="text-slate-400 uppercase font-semibold">REGIME</span>
+      <span class="text-purple-400 font-bold" id="ticker-regime">BULL_TRENDING (78%)</span>
+    </div>
+  </div>
+
+  <!-- ==================== 3. MAIN TRADING TERMINAL (3-COLUMN WORKSPACE) ==================== -->
+  <div id="view-dashboard" class="flex flex-1 overflow-hidden">
     
-    <!-- LEFT SIDEBAR: KITE MARKET WATCHLIST (1-5 TABS) -->
-    <aside class="w-80 lg:w-88 bg-[#090d14] border-r border-[#1a2336] flex flex-col shrink-0">
+    <!-- ========== LEFT COLUMN: MARKET WATCH ========== -->
+    <aside class="w-72 lg:w-80 bg-[#090d14] border-r border-[#182130] flex flex-col shrink-0">
       
-      <!-- Watchlist Search Bar -->
-      <div class="p-2.5 border-b border-[#1a2336]">
-        <div class="relative">
-          <input id="watchlist-search" type="text" placeholder="Search eg: nvda, aapl, infy, reliance..." oninput="filterWatchlist(this.value)" class="w-full bg-[#101622] border border-[#1b263b] rounded px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#387ed1]">
-          <span class="absolute right-2.5 top-2 text-[10px] text-slate-500 font-mono" id="watchlist-counter">7/50</span>
+      <!-- Market Watch Header & Tabs -->
+      <div class="p-2.5 border-b border-[#182130] space-y-2">
+        <div class="flex justify-between items-center text-[10px] font-mono uppercase text-slate-400">
+          <span class="font-bold text-white tracking-wider">Market Watch</span>
+          <span id="market-watch-count">7 Instruments</span>
+        </div>
+        <div class="flex rounded bg-[#101622] p-0.5 font-mono text-[10px]">
+          <button onclick="setWatchlist(1)" id="wl-btn-1" class="flex-1 py-1 rounded bg-[#1c2738] text-white font-bold">Main</button>
+          <button onclick="setWatchlist(2)" id="wl-btn-2" class="flex-1 py-1 rounded text-slate-400 hover:text-white">Indices</button>
+          <button onclick="setWatchlist(3)" id="wl-btn-3" class="flex-1 py-1 rounded text-slate-400 hover:text-white">Tech</button>
+          <button onclick="setWatchlist(4)" id="wl-btn-4" class="flex-1 py-1 rounded text-slate-400 hover:text-white">India</button>
         </div>
       </div>
 
-      <!-- Watchlist Items List -->
-      <div id="watchlist-container" class="flex-1 overflow-y-auto divide-y divide-[#131b2b]">
-        <!-- Dynamic items populated by JS -->
-      </div>
-
-      <!-- Watchlist Tab Selector (1, 2, 3, 4, 5) -->
-      <div class="h-10 bg-[#070a10] border-t border-[#1a2336] flex items-center justify-around font-mono text-xs text-slate-400">
-        <button onclick="setWatchlistTab(1)" class="w-full h-full flex items-center justify-center active-watchlist-tab" id="wl-tab-1">1</button>
-        <button onclick="setWatchlistTab(2)" class="w-full h-full flex items-center justify-center hover:text-white" id="wl-tab-2">2</button>
-        <button onclick="setWatchlistTab(3)" class="w-full h-full flex items-center justify-center hover:text-white" id="wl-tab-3">3</button>
-        <button onclick="setWatchlistTab(4)" class="w-full h-full flex items-center justify-center hover:text-white" id="wl-tab-4">4</button>
-        <button onclick="setWatchlistTab(5)" class="w-full h-full flex items-center justify-center hover:text-white" id="wl-tab-5">5</button>
+      <!-- Watchlist Instruments Rows -->
+      <div id="watchlist-rows" class="flex-1 overflow-y-auto divide-y divide-[#131b28] font-mono text-xs">
+        <!-- Rendered by JavaScript -->
       </div>
 
     </aside>
 
-    <!-- RIGHT MAIN WORKSPACE -->
-    <main id="main-workspace" class="flex-1 overflow-y-auto bg-[#0c1017] p-6">
-      <!-- Dynamic Workspace Views Rendered Here -->
-    </main>
-
-  </div>
-
-  <!-- ==================== FLOATING KITE ORDER WINDOW MODAL ==================== -->
-  <div id="order-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs hidden">
-    <div class="w-full max-w-lg bg-[#101622] border border-[#1e293f] rounded-lg shadow-2xl overflow-hidden font-sans">
+    <!-- ========== CENTER COLUMN: MAIN CHART & CONTROLS ========== -->
+    <section class="flex-1 flex flex-col bg-[#070a0e] overflow-hidden">
       
-      <!-- Order Header (Buy/Sell Toggle) -->
-      <div id="order-header-bar" class="px-5 py-3 bg-[#387ed1] text-white flex justify-between items-center transition-colors">
-        <div class="flex items-center space-x-3">
-          <div class="font-bold text-sm" id="order-symbol-display">BUY NVDA</div>
-          <span class="text-xs bg-black/20 px-2 py-0.5 rounded font-mono" id="order-exchange-display">NASDAQ</span>
-          <span class="text-xs font-mono font-bold" id="order-price-display">$124.50</span>
-        </div>
-        <div class="flex items-center space-x-3">
-          <!-- Buy/Sell Switch -->
-          <div class="flex rounded bg-black/30 p-0.5 text-xs font-bold font-mono">
-            <button onclick="setOrderSide('BUY')" id="order-toggle-buy" class="px-3 py-0.5 rounded bg-white text-blue-600 transition">BUY</button>
-            <button onclick="setOrderSide('SELL')" id="order-toggle-sell" class="px-3 py-0.5 rounded text-white transition">SELL</button>
-          </div>
-          <button onclick="closeOrderModal()" class="text-white/80 hover:text-white">&times;</button>
-        </div>
-      </div>
-
-      <!-- Order Form -->
-      <div class="p-5 space-y-4 text-xs">
+      <!-- Chart Control Strip -->
+      <div class="h-9 bg-[#0b0f16] border-b border-[#161f2d] flex items-center justify-between px-3 text-[11px] font-mono shrink-0">
         
-        <!-- Product: CNC (Longterm) vs MIS (Intraday) -->
-        <div class="flex space-x-6 border-b border-slate-800 pb-3 font-mono">
-          <label class="flex items-center space-x-2 cursor-pointer">
-            <input type="radio" name="order-product" value="CNC" checked class="text-blue-500">
-            <span class="font-semibold text-white">CNC</span>
-            <span class="text-[10px] text-slate-400">(Longterm / Delivery)</span>
+        <!-- Left: Selected Instrument Details -->
+        <div class="flex items-center space-x-3">
+          <span class="text-sm font-black text-white" id="chart-symbol">NVDA</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300" id="chart-exchange">NASDAQ</span>
+          <span class="text-sm font-bold text-white" id="chart-ltp">$124.50</span>
+          <span class="text-[11px] font-bold text-[#00c076]" id="chart-change">+$3.42 (+2.82%)</span>
+        </div>
+
+        <!-- Center: Timeframe Selector -->
+        <div class="flex items-center space-x-1 text-[10px]">
+          <button onclick="setTimeframe('1D')" class="px-2 py-0.5 rounded bg-[#162132] text-white font-bold" id="tf-1D">1D</button>
+          <button onclick="setTimeframe('1W')" class="px-2 py-0.5 rounded text-slate-400 hover:text-white" id="tf-1W">1W</button>
+          <button onclick="setTimeframe('1M')" class="px-2 py-0.5 rounded text-slate-400 hover:text-white" id="tf-1M">1M</button>
+          <button onclick="setTimeframe('1Y')" class="px-2 py-0.5 rounded text-slate-400 hover:text-white" id="tf-1Y">1Y</button>
+        </div>
+
+        <!-- Right: Overlay Toggles -->
+        <div class="flex items-center space-x-2 text-[10px] text-slate-400">
+          <label class="flex items-center space-x-1 cursor-pointer">
+            <input type="checkbox" id="toggle-ema" checked onchange="toggleOverlay('ema')" class="rounded bg-slate-900 border-slate-700 text-[#00c076]">
+            <span>EMA 21/50/200</span>
           </label>
-          <label class="flex items-center space-x-2 cursor-pointer">
-            <input type="radio" name="order-product" value="MIS" class="text-blue-500">
-            <span class="font-semibold text-white">MIS</span>
-            <span class="text-[10px] text-slate-400">(Intraday with Margin)</span>
+          <label class="flex items-center space-x-1 cursor-pointer">
+            <input type="checkbox" id="toggle-vol" checked onchange="toggleOverlay('vol')" class="rounded bg-slate-900 border-slate-700 text-[#00c076]">
+            <span>Volume</span>
+          </label>
+          <label class="flex items-center space-x-1 cursor-pointer">
+            <input type="checkbox" id="toggle-ai-markers" checked onchange="toggleOverlay('markers')" class="rounded bg-slate-900 border-slate-700 text-[#00c076]">
+            <span>AI Decision Markers</span>
           </label>
         </div>
 
-        <!-- Quantity & Price Inputs -->
-        <div class="grid grid-cols-2 gap-4">
-          <div class="space-y-1">
-            <label class="text-[11px] text-slate-400 font-mono">Quantity</label>
-            <input id="order-qty" type="number" value="10" min="1" oninput="recalcOrderMargin()" class="w-full bg-[#0a0e16] border border-[#1f2b40] rounded px-3 py-1.5 text-white font-mono text-sm focus:outline-none focus:border-[#387ed1]">
+      </div>
+
+      <!-- Chart Canvas Container -->
+      <div id="chart-container" class="flex-1 w-full h-full relative bg-[#070a0e]">
+        <div id="tv-chart" class="w-full h-full"></div>
+        <!-- Loading Overlay -->
+        <div id="chart-loading" class="absolute inset-0 flex items-center justify-center bg-[#070a0e]/70 text-slate-400 font-mono text-xs hidden">
+          Loading chart data...
+        </div>
+      </div>
+
+      <!-- Persistent Bottom Drawer: Positions / Orders / Holdings / P&L -->
+      <div class="h-48 bg-[#090d14] border-t border-[#182130] flex flex-col shrink-0">
+        
+        <!-- Bottom Drawer Tab Switcher -->
+        <div class="h-7 bg-[#0b0f16] border-b border-[#151d29] flex items-center justify-between px-3 text-[11px] font-mono">
+          <div class="flex space-x-4">
+            <button onclick="setBottomTab('positions')" id="bt-tab-positions" class="hover:text-white terminal-tab-active">Positions (1)</button>
+            <button onclick="setBottomTab('orders')" id="bt-tab-orders" class="text-slate-400 hover:text-white">Orders (3)</button>
+            <button onclick="setBottomTab('holdings')" id="bt-tab-holdings" class="text-slate-400 hover:text-white">Holdings (4)</button>
+            <button onclick="setBottomTab('pnl')" id="bt-tab-pnl" class="text-slate-400 hover:text-white">P&L Summary</button>
+            <button onclick="setBottomTab('portfolio')" id="bt-tab-portfolio" class="text-slate-400 hover:text-white">Portfolio Risk</button>
           </div>
-          <div class="space-y-1">
-            <label class="text-[11px] text-slate-400 font-mono">Price</label>
-            <input id="order-limit-price" type="number" step="0.01" value="124.50" oninput="recalcOrderMargin()" class="w-full bg-[#0a0e16] border border-[#1f2b40] rounded px-3 py-1.5 text-white font-mono text-sm focus:outline-none focus:border-[#387ed1]">
+          <div class="text-[10px] text-slate-400 font-mono">
+            Unrealized MTM: <span class="text-[#00c076] font-bold">+$420.50</span> | Total Equity: <span class="text-white font-bold">$248,500.00</span>
           </div>
         </div>
 
-        <!-- Order Type: Market / Limit / SL / SL-M -->
-        <div class="flex space-x-4 border-b border-slate-800 pb-3 font-mono text-[11px]">
-          <label class="flex items-center space-x-1.5 cursor-pointer">
-            <input type="radio" name="order-type" value="MARKET" class="text-blue-500">
-            <span class="text-slate-300">Market</span>
-          </label>
-          <label class="flex items-center space-x-1.5 cursor-pointer">
-            <input type="radio" name="order-type" value="LIMIT" checked class="text-blue-500">
-            <span class="text-slate-300">Limit</span>
-          </label>
-          <label class="flex items-center space-x-1.5 cursor-pointer">
-            <input type="radio" name="order-type" value="SL" class="text-blue-500">
-            <span class="text-slate-300">SL</span>
-          </label>
-          <label class="flex items-center space-x-1.5 cursor-pointer">
-            <input type="radio" name="order-type" value="SL-M" class="text-blue-500">
-            <span class="text-slate-300">SL-M</span>
-          </label>
+        <!-- Bottom Drawer Table Content -->
+        <div id="bottom-content" class="flex-1 overflow-y-auto p-2 font-mono text-xs">
+          <!-- Populated by JS -->
         </div>
 
-        <!-- TradeX AI Risk Guardian Live Gate Indicator -->
-        <div id="order-guardian-card" class="p-3 rounded bg-[#0a0f18] border border-emerald-500/30 space-y-1">
-          <div class="flex items-center justify-between">
-            <span class="font-mono text-[10px] text-emerald-400 font-bold uppercase flex items-center space-x-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>TradeX AI Risk Guardian // Approved</span>
-            </span>
-            <span class="text-[10px] font-mono text-slate-400">Limits Enforced</span>
+      </div>
+
+    </section>
+
+    <!-- ========== RIGHT COLUMN: TRADEX AI DECISION SUPPORT ========== -->
+    <aside class="w-80 lg:w-96 bg-[#090d14] border-l border-[#182130] flex flex-col shrink-0 overflow-y-auto font-mono text-xs">
+      
+      <!-- Panel Header -->
+      <div class="p-3 border-b border-[#182130] flex justify-between items-center bg-[#0d121c]">
+        <div class="flex items-center space-x-2">
+          <span class="w-2 h-2 rounded-full bg-[#00c076] animate-pulse"></span>
+          <span class="font-bold text-white tracking-wider text-xs">TRADEX AI INTELLIGENCE</span>
+        </div>
+        <button onclick="runAIDecision()" class="px-2 py-0.5 rounded bg-[#182336] hover:bg-[#202f48] text-[#00c076] text-[10px] transition font-bold">
+          Analyze
+        </button>
+      </div>
+
+      <!-- Main Decision Card -->
+      <div class="p-3.5 border-b border-[#182130] space-y-3 bg-[#0a0e16]">
+        
+        <!-- Symbol + Main Action Badge -->
+        <div class="flex justify-between items-start">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase">Decision Signal</div>
+            <div id="ai-decision-badge" class="text-2xl font-black text-[#00c076] mt-0.5">
+              HOLD
+            </div>
           </div>
-          <p class="text-[11px] text-slate-300" id="order-guardian-reason">
-            Safe position sizing: Proposed position represents 0.6% of portfolio equity ($1,245.00). Max cap is 10.0%.
-          </p>
+          <div class="text-right">
+            <div class="text-[10px] text-slate-400 uppercase">Risk Guardian</div>
+            <div id="ai-guardian-badge" class="px-2 py-0.5 rounded text-[11px] font-bold badge-approved inline-block mt-0.5">
+              ✓ APPROVED
+            </div>
+          </div>
         </div>
 
-        <!-- Margin Bar -->
-        <div class="flex justify-between items-center font-mono text-[11px] pt-1">
-          <div class="text-slate-400">
-            Margin required: <span class="text-white font-bold" id="order-margin-req">$1,245.00</span>
+        <!-- 4-Stat Strip: Confidence, Uncertainty, Regime, Allocation -->
+        <div class="grid grid-cols-2 gap-2 text-[11px]">
+          <div class="p-2 rounded bg-[#101622] border border-[#172030]">
+            <div class="text-[9px] text-slate-400 uppercase">Calibrated Conf</div>
+            <div class="text-sm font-bold text-white mt-0.5" id="ai-confidence">78.2%</div>
           </div>
-          <div class="text-slate-400">
-            Available: <span class="text-emerald-400 font-bold">$206,400.00</span>
+          <div class="p-2 rounded bg-[#101622] border border-[#172030]">
+            <div class="text-[9px] text-slate-400 uppercase">Uncertainty</div>
+            <div class="text-sm font-bold text-amber-400 mt-0.5" id="ai-uncertainty">21.8%</div>
+          </div>
+          <div class="p-2 rounded bg-[#101622] border border-[#172030]">
+            <div class="text-[9px] text-slate-400 uppercase">Regime</div>
+            <div class="text-sm font-bold text-purple-400 mt-0.5 truncate" id="ai-regime">BULL_TRENDING</div>
+          </div>
+          <div class="p-2 rounded bg-[#101622] border border-[#172030]">
+            <div class="text-[9px] text-slate-400 uppercase">Approved Sizing</div>
+            <div class="text-sm font-bold text-[#00c076] mt-0.5" id="ai-allocation">5.0% Portfolio</div>
           </div>
         </div>
 
       </div>
 
-      <!-- Order Actions -->
-      <div class="px-5 py-3 bg-[#0a0e16] border-t border-[#1a2336] flex justify-between items-center font-mono">
-        <button onclick="closeOrderModal()" class="px-4 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
-          Cancel
-        </button>
-        <button id="order-submit-btn" onclick="executeKiteOrder()" class="px-6 py-1.5 rounded bg-[#387ed1] hover:bg-[#2d6bb3] text-white font-bold transition shadow-lg">
-          Buy
-        </button>
+      <!-- AI Evidence & 5-Model Agreement -->
+      <div class="p-3.5 border-b border-[#182130] space-y-2.5 bg-[#080c12]">
+        <div class="flex justify-between items-center text-[10px] uppercase text-slate-400">
+          <span class="font-bold text-white">AI Evidence Synthesis</span>
+          <span id="ai-agreement">Agreement: 84%</span>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-1.5 text-[10px]">
+          <div class="flex justify-between p-1.5 rounded bg-[#0e1420] border border-[#162030]">
+            <span class="text-slate-400">Technical Trend:</span>
+            <span class="font-bold text-[#00c076]" id="ev-tech">BUY</span>
+          </div>
+          <div class="flex justify-between p-1.5 rounded bg-[#0e1420] border border-[#162030]">
+            <span class="text-slate-400">News Catalyst:</span>
+            <span class="font-bold text-[#00c076]" id="ev-news">BUY</span>
+          </div>
+          <div class="flex justify-between p-1.5 rounded bg-[#0e1420] border border-[#162030]">
+            <span class="text-slate-400">Macro Regime:</span>
+            <span class="font-bold text-amber-400" id="ev-regime">HOLD</span>
+          </div>
+          <div class="flex justify-between p-1.5 rounded bg-[#0e1420] border border-[#162030]">
+            <span class="text-slate-400">ML Council:</span>
+            <span class="font-bold text-[#00c076]" id="ev-ml">BUY</span>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center text-[10px] pt-1">
+          <span class="text-slate-400">Evidence Conflict:</span>
+          <span class="font-bold text-amber-400" id="ev-conflict">MILD (Entropy 0.28)</span>
+        </div>
       </div>
 
-    </div>
+      <!-- Expandable: WHY THIS DECISION -->
+      <details class="p-3 border-b border-[#182130] bg-[#090d14] group" open>
+        <summary class="font-bold text-slate-200 cursor-pointer flex justify-between items-center text-[11px] list-none">
+          <span class="flex items-center space-x-1.5">
+            <span class="text-[#00c076]">✓</span>
+            <span>WHY THIS DECISION?</span>
+          </span>
+          <span class="text-slate-500 group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <div class="mt-2 text-[11px] text-slate-300 leading-relaxed space-y-1.5" id="ai-why-text">
+          <p>• Technical breakout above 20 EMA with positive MACD divergence.</p>
+          <p>• High-materiality enterprise catalysts driving sustained volume surge (RVOL 1.82).</p>
+          <p>• Broad market regime BULL_TRENDING provides structural tailwind for long positions.</p>
+        </div>
+      </details>
+
+      <!-- Expandable: WHY NOT? -->
+      <details class="p-3 border-b border-[#182130] bg-[#090d14] group" open>
+        <summary class="font-bold text-slate-200 cursor-pointer flex justify-between items-center text-[11px] list-none">
+          <span class="flex items-center space-x-1.5">
+            <span class="text-amber-400">⚠</span>
+            <span>WHY NOT ALTERNATIVE ACTIONS?</span>
+          </span>
+          <span class="text-slate-500 group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <div class="mt-2 text-[11px] text-slate-300 space-y-2" id="ai-why-not-text">
+          <div class="p-2 rounded bg-[#0f1522] border border-[#172233]">
+            <strong class="text-rose-400">Why not full aggressive BUY?</strong>
+            <p class="text-slate-400 mt-0.5 text-[10px]">Short-term RSI approaching overbought threshold (68.4); scaling in with 5% allocation avoids peak variance.</p>
+          </div>
+          <div class="p-2 rounded bg-[#0f1522] border border-[#172233]">
+            <strong class="text-slate-300">Why not NO_TRADE abstention?</strong>
+            <p class="text-slate-400 mt-0.5 text-[10px]">Risk-reward ratio (2.4:1) exceeds hurdle rate after subtracting estimated Almgren-Chriss execution slippage.</p>
+          </div>
+        </div>
+      </details>
+
+      <!-- Multi-Horizon Reasoning -->
+      <div class="p-3 border-b border-[#182130] space-y-2 bg-[#080c12]">
+        <div class="text-[10px] font-bold text-white uppercase">Multi-Horizon Evaluation</div>
+        <div class="space-y-1 text-[10px]">
+          <div class="flex justify-between items-center py-0.5">
+            <span class="text-slate-400">Short-Term (1-5d):</span>
+            <span class="font-bold text-[#00c076]" id="hz-short">BUY (75%)</span>
+          </div>
+          <div class="flex justify-between items-center py-0.5">
+            <span class="text-slate-400">Medium-Term (2-8w):</span>
+            <span class="font-bold text-[#00c076]" id="hz-med">BUY (80%)</span>
+          </div>
+          <div class="flex justify-between items-center py-0.5">
+            <span class="text-slate-400">Long-Term (3-12m):</span>
+            <span class="font-bold text-amber-400" id="hz-long">HOLD (55%)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Simulation Area -->
+      <div class="p-3 mt-auto bg-[#0b0f16] border-t border-[#182130] space-y-2">
+        <div class="text-[9px] text-slate-500 uppercase text-center font-mono">Simulated Execution Environment (Paper Trading)</div>
+        <div class="flex space-x-2">
+          <button onclick="simulateOrder('BUY')" class="flex-1 py-2 rounded bg-[#00c076] hover:bg-[#00a364] text-black font-black uppercase tracking-wider text-xs transition shadow-sm">
+            Simulate Buy
+          </button>
+          <button onclick="simulateOrder('SELL')" class="flex-1 py-2 rounded bg-[#eb455f] hover:bg-[#d63851] text-white font-black uppercase tracking-wider text-xs transition shadow-sm">
+            Simulate Sell
+          </button>
+        </div>
+      </div>
+
+    </aside>
+
   </div>
 
-  <!-- ==================== JAVASCRIPT STATE ENGINE ==================== -->
+  <!-- ==================== 4. DEDICATED APPLICATION PAGES ==================== -->
+  <div id="view-container" class="flex-1 overflow-y-auto p-6 hidden bg-[#070a0e]">
+    <!-- Populated dynamically when switching from navigation -->
+  </div>
+
+  <!-- ==================== FRONTEND CONTROLLER JAVASCRIPT ==================== -->
   <script>
-    // System & User State
-    const AppState = {
-      isLoggedIn: false,
-      user: {
-        userId: "RK8920",
-        name: "Rakshitha T R",
-        email: "rakshitha@tradex.internal",
-        broker: "TradeX Securities Pvt Ltd",
-        funds: {
-          equityAvailable: 206400,
-          equityUsed: 42100,
-          totalEquity: 248500,
-          commodityAvailable: 85000
-        }
-      },
-      currentTab: "dashboard",
-      currentWatchlistIndex: 1,
+    // Application State
+    const TradeX = {
+      activeView: "dashboard",
       selectedSymbol: "NVDA",
-      currentDecision: null,
-      currentPortfolio: null,
-      currentMarketPulse: null,
-      orders: [
-        { id: "ORD-9801", symbol: "NVDA", side: "BUY", product: "CNC", qty: 25, price: 121.50, status: "COMPLETE", time: "10:14:22" },
-        { id: "ORD-9802", symbol: "RELIANCE.NS", side: "BUY", product: "CNC", qty: 10, price: 2940.00, status: "COMPLETE", time: "11:05:40" },
-        { id: "ORD-9803", symbol: "AAPL", side: "SELL", product: "MIS", qty: 15, price: 228.30, status: "COMPLETE", time: "13:20:10" },
-        { id: "ORD-9804", symbol: "NVDA", side: "BUY", product: "MIS", qty: 50, price: 125.00, status: "REJECTED_BY_GUARDIAN", time: "14:45:00", reason: "Exceeds single position 10% limit" }
-      ],
+      selectedExchange: "NASDAQ",
+      selectedPrice: 124.50,
+      activeWatchlistTab: 1,
+      activeBottomTab: "positions",
+      chart: null,
+      candleSeries: null,
+      volumeSeries: null,
+      emaSeries: null,
+      overlays: { ema: true, vol: true, markers: true },
       watchlists: {
         1: [
           { symbol: "NVDA", name: "NVIDIA Corp", exchange: "NASDAQ", price: 124.50, change: 3.42, pct: 2.82 },
@@ -381,767 +458,674 @@
           { symbol: "RELIANCE.NS", name: "Reliance Industries", exchange: "NSE", price: 2948.50, change: 34.20, pct: 1.17 },
           { symbol: "TCS.NS", name: "Tata Consultancy", exchange: "NSE", price: 4280.00, change: 12.50, pct: 0.29 },
           { symbol: "MSFT", name: "Microsoft Corp", exchange: "NASDAQ", price: 448.20, change: 2.10, pct: 0.47 },
-          { symbol: "SPY", name: "SPDR S&P 500", exchange: "NYSE", price: 584.20, change: 3.10, pct: 0.53 },
-          { symbol: "QQQ", name: "Invesco QQQ", exchange: "NASDAQ", price: 492.15, change: 4.80, pct: 0.98 }
+          { symbol: "SPY", name: "SPDR S&P 500 ETF", exchange: "NYSE", price: 584.20, change: 3.10, pct: 0.53 },
+          { symbol: "QQQ", name: "Invesco QQQ Trust", exchange: "NASDAQ", price: 492.15, change: 4.80, pct: 0.98 }
         ],
         2: [
-          { symbol: "HDFCBANK.NS", name: "HDFC Bank Ltd", exchange: "NSE", price: 1682.00, change: 8.40, pct: 0.50 },
-          { symbol: "INFY.NS", name: "Infosys Ltd", exchange: "NSE", price: 1912.40, change: -6.20, pct: -0.32 },
-          { symbol: "ICICIBANK.NS", name: "ICICI Bank", exchange: "NSE", price: 1240.10, change: 14.10, pct: 1.15 }
+          { symbol: "NIFTY 50", name: "NSE Nifty 50 Index", exchange: "NSE", price: 24852.15, change: 142.30, pct: 0.58 },
+          { symbol: "BANK NIFTY", name: "Nifty Bank Index", exchange: "NSE", price: 51210.45, change: 218.10, pct: 0.43 },
+          { symbol: "SENSEX", name: "BSE Sensex Index", exchange: "BSE", price: 81340.20, change: 412.80, pct: 0.51 }
         ],
-        3: [{ symbol: "TSLA", name: "Tesla Inc", exchange: "NASDAQ", price: 254.10, change: -4.30, pct: -1.66 }],
-        4: [{ symbol: "GOLD", name: "Gold Mini Fut", exchange: "MCX", price: 76420.00, change: 310.00, pct: 0.41 }],
-        5: [{ symbol: "CRUDEOIL", name: "Crude Oil", exchange: "MCX", price: 6120.00, change: -45.00, pct: -0.73 }]
-      }
+        3: [
+          { symbol: "NVDA", name: "NVIDIA Corp", exchange: "NASDAQ", price: 124.50, change: 3.42, pct: 2.82 },
+          { symbol: "MSFT", name: "Microsoft Corp", exchange: "NASDAQ", price: 448.20, change: 2.10, pct: 0.47 },
+          { symbol: "GOOGL", name: "Alphabet Inc", exchange: "NASDAQ", price: 168.40, change: -0.80, pct: -0.47 }
+        ],
+        4: [
+          { symbol: "RELIANCE.NS", name: "Reliance Industries", exchange: "NSE", price: 2948.50, change: 34.20, pct: 1.17 },
+          { symbol: "TCS.NS", name: "Tata Consultancy", exchange: "NSE", price: 4280.00, change: 12.50, pct: 0.29 },
+          { symbol: "HDFCBANK.NS", name: "HDFC Bank Ltd", exchange: "NSE", price: 1682.00, change: 8.40, pct: 0.50 }
+        ]
+      },
+      positions: [
+        { symbol: "NVDA", qty: 50, avg: 121.20, ltp: 124.50, pnl: 165.00, pnlPct: 2.72, exposure: 6225.00 }
+      ],
+      orders: [
+        { id: "TX-1041", symbol: "NVDA", qty: 50, type: "MARKET", side: "BUY", status: "COMPLETE", time: "10:14:22" },
+        { id: "TX-1042", symbol: "RELIANCE.NS", qty: 10, type: "LIMIT", side: "BUY", status: "COMPLETE", time: "11:05:40" },
+        { id: "TX-1043", symbol: "AAPL", qty: 25, type: "LIMIT", side: "BUY", status: "CANCELLED", time: "14:20:10" }
+      ],
+      holdings: [
+        { symbol: "NVDA", qty: 300, avg: 104.20, ltp: 124.50, curValue: 37350.00, pnl: 6090.00, pnlPct: 19.48 },
+        { symbol: "RELIANCE.NS", qty: 500, avg: 2820.00, ltp: 2948.50, curValue: 1474250.00, pnl: 64250.00, pnlPct: 4.55 },
+        { symbol: "SPY", qty: 120, avg: 540.00, ltp: 584.20, curValue: 70104.00, pnl: 5304.00, pnlPct: 8.18 }
+      ]
     };
 
-    // Current order modal state
-    const OrderState = {
-      symbol: "NVDA",
-      exchange: "NASDAQ",
-      price: 124.50,
-      side: "BUY"
-    };
+    // Navigation View Switcher
+    function switchView(viewName) {
+      TradeX.activeView = viewName;
+      
+      // Update nav link styles
+      document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+      const activeLink = document.getElementById(`nav-${viewName}`);
+      if (activeLink) activeLink.classList.add('active');
 
-    // Login Flow Functions
-    function goToStep2() {
-      const user = document.getElementById('login-userid').value;
-      if (!user) return alert('Enter User ID');
-      document.getElementById('display-user').innerText = user;
-      document.getElementById('login-step-1').classList.add('hidden');
-      document.getElementById('login-step-2').classList.remove('hidden');
-    }
+      const dashboard = document.getElementById('view-dashboard');
+      const container = document.getElementById('view-container');
 
-    function backToStep1() {
-      document.getElementById('login-step-2').classList.add('hidden');
-      document.getElementById('login-step-1').classList.remove('hidden');
-    }
-
-    function completeLogin() {
-      AppState.isLoggedIn = true;
-      document.getElementById('login-modal').classList.add('hidden');
-      document.getElementById('user-header-id').innerText = AppState.user.userId;
-      initDashboard();
-    }
-
-    function quickDemoLogin() {
-      AppState.isLoggedIn = true;
-      document.getElementById('login-modal').classList.add('hidden');
-      initDashboard();
-    }
-
-    function logout() {
-      AppState.isLoggedIn = false;
-      document.getElementById('login-modal').classList.remove('hidden');
-      document.getElementById('user-dropdown').classList.add('hidden');
-      backToStep1();
-    }
-
-    function toggleUserDropdown() {
-      document.getElementById('user-dropdown').classList.toggle('hidden');
-    }
-
-    // Watchlist Functions
-    function setWatchlistTab(idx) {
-      AppState.currentWatchlistIndex = idx;
-      for (let i = 1; i <= 5; i++) {
-        document.getElementById(`wl-tab-${i}`).classList.remove('active-watchlist-tab');
+      if (viewName === "dashboard") {
+        dashboard.classList.remove('hidden');
+        container.classList.add('hidden');
+        setTimeout(() => resizeChart(), 100);
+      } else {
+        dashboard.classList.add('hidden');
+        container.classList.remove('hidden');
+        renderDedicatedPage(viewName);
       }
-      document.getElementById(`wl-tab-${idx}`).classList.add('active-watchlist-tab');
+    }
+
+    // Watchlist Management
+    function setWatchlist(idx) {
+      TradeX.activeWatchlistTab = idx;
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById(`wl-btn-${i}`);
+        if (i === idx) {
+          btn.className = "flex-1 py-1 rounded bg-[#1c2738] text-white font-bold";
+        } else {
+          btn.className = "flex-1 py-1 rounded text-slate-400 hover:text-white";
+        }
+      }
       renderWatchlist();
     }
 
-    function filterWatchlist(query) {
-      renderWatchlist(query.toLowerCase());
-    }
-
     function renderWatchlist(filter = "") {
-      const container = document.getElementById('watchlist-container');
-      const items = (AppState.watchlists[AppState.currentWatchlistIndex] || []).filter(
-        item => item.symbol.toLowerCase().includes(filter) || item.name.toLowerCase().includes(filter)
+      const container = document.getElementById('watchlist-rows');
+      const items = (TradeX.watchlists[TradeX.activeWatchlistTab] || []).filter(
+        i => i.symbol.toLowerCase().includes(filter) || i.name.toLowerCase().includes(filter)
       );
-      document.getElementById('watchlist-counter').innerText = `${items.length}/50`;
+      document.getElementById('market-watch-count').innerText = `${items.length} Instruments`;
 
       container.innerHTML = items.map(item => {
         const isUp = item.pct >= 0;
-        const isSelected = item.symbol === AppState.selectedSymbol;
+        const isSelected = item.symbol === TradeX.selectedSymbol;
         return `
-          <div class="watchlist-item relative p-3 hover:bg-[#101622] transition cursor-pointer flex justify-between items-center group ${isSelected ? 'bg-[#101622]/80 border-l-2 border-[#f65026]' : ''}" onclick="selectSymbol('${item.symbol}')">
+          <div class="watchlist-row p-2.5 flex justify-between items-center cursor-pointer transition ${isSelected ? 'selected' : ''}" onclick="selectInstrument('${item.symbol}', '${item.exchange}', ${item.price}, ${item.change}, ${item.pct})">
             <div>
               <div class="flex items-center space-x-1.5">
-                <span class="font-bold text-slate-100">${item.symbol}</span>
-                <span class="text-[9px] px-1 rounded bg-slate-800 text-slate-400 font-mono">${item.exchange}</span>
+                <span class="font-bold text-white">${item.symbol}</span>
+                <span class="text-[9px] px-1 rounded bg-[#131b28] text-slate-400">${item.exchange}</span>
               </div>
-              <div class="text-[10px] text-slate-400 truncate max-w-[140px]">${item.name}</div>
+              <div class="text-[10px] text-slate-400 truncate max-w-[130px]">${item.name}</div>
             </div>
-            
-            <div class="text-right font-mono">
-              <div class="font-bold ${isUp ? 'text-[#00a25b]' : 'text-[#eb455f]'}">${item.price.toFixed(2)}</div>
-              <div class="text-[10px] ${isUp ? 'text-[#00a25b]' : 'text-[#eb455f]'}">${isUp ? '+' : ''}${item.pct.toFixed(2)}%</div>
-            </div>
-
-            <!-- Hover Quick Actions: Buy, Sell, AI Deep Dive -->
-            <div class="watchlist-actions absolute right-2 inset-y-0 items-center space-x-1 bg-[#101622] pl-2 hidden" onclick="event.stopPropagation()">
-              <button onclick="openOrderModal('${item.symbol}', '${item.exchange}', ${item.price}, 'BUY')" class="w-6 h-6 rounded bg-[#387ed1] hover:bg-[#2d6bb3] text-white font-bold flex items-center justify-center text-[10px] shadow" title="Buy (B)">B</button>
-              <button onclick="openOrderModal('${item.symbol}', '${item.exchange}', ${item.price}, 'SELL')" class="w-6 h-6 rounded bg-[#f65026] hover:bg-[#e0451d] text-white font-bold flex items-center justify-center text-[10px] shadow" title="Sell (S)">S</button>
-              <button onclick="selectSymbolAndOpenAI('${item.symbol}')" class="w-6 h-6 rounded bg-purple-600 hover:bg-purple-500 text-white font-bold flex items-center justify-center text-[10px] shadow" title="TradeX AI Decision Support">AI</button>
+            <div class="text-right">
+              <div class="font-bold ${isUp ? 'text-[#00c076]' : 'text-[#eb455f]'}">${item.price.toFixed(2)}</div>
+              <div class="text-[10px] ${isUp ? 'text-[#00c076]' : 'text-[#eb455f]'}">${isUp ? '+' : ''}${item.pct.toFixed(2)}%</div>
             </div>
           </div>
         `;
       }).join('');
     }
 
-    function selectSymbol(sym) {
-      AppState.selectedSymbol = sym;
+    function selectInstrument(symbol, exchange, price, change, pct) {
+      TradeX.selectedSymbol = symbol;
+      TradeX.selectedExchange = exchange;
+      TradeX.selectedPrice = price;
+
+      document.getElementById('chart-symbol').innerText = symbol;
+      document.getElementById('chart-exchange').innerText = exchange;
+      document.getElementById('chart-ltp').innerText = `$${price.toFixed(2)}`;
+      
+      const changeEl = document.getElementById('chart-change');
+      const isUp = pct >= 0;
+      changeEl.innerText = `${isUp ? '+' : ''}$${change.toFixed(2)} (${isUp ? '+' : ''}${pct.toFixed(2)}%)`;
+      changeEl.className = `text-[11px] font-bold ${isUp ? 'text-[#00c076]' : 'text-[#eb455f]'}`;
+
       renderWatchlist();
-      if (AppState.currentTab === "ai") {
-        loadAIDecision(sym);
-      }
+      loadChartData(symbol);
+      runAIDecision(symbol);
     }
 
-    function selectSymbolAndOpenAI(sym) {
-      AppState.selectedSymbol = sym;
-      switchKiteTab('ai');
+    function handleGlobalSearch(query) {
+      renderWatchlist(query.toLowerCase());
     }
 
-    // Order Modal Functions
-    function openOrderModal(symbol, exchange, price, side = "BUY") {
-      OrderState.symbol = symbol;
-      OrderState.exchange = exchange;
-      OrderState.price = price;
-      OrderState.side = side;
+    // TradingView Lightweight Chart Integration
+    function initTradingViewChart() {
+      const chartElem = document.getElementById('tv-chart');
+      if (!chartElem) return;
 
-      document.getElementById('order-symbol-display').innerText = `${side} ${symbol}`;
-      document.getElementById('order-exchange-display').innerText = exchange;
-      document.getElementById('order-price-display').innerText = `$${price.toFixed(2)}`;
-      document.getElementById('order-limit-price').value = price.toFixed(2);
+      chartElem.innerHTML = '';
       
-      setOrderSide(side);
-      recalcOrderMargin();
-      document.getElementById('order-modal').classList.remove('hidden');
-    }
-
-    function setOrderSide(side) {
-      OrderState.side = side;
-      const header = document.getElementById('order-header-bar');
-      const submitBtn = document.getElementById('order-submit-btn');
-      const buyToggle = document.getElementById('order-toggle-buy');
-      const sellToggle = document.getElementById('order-toggle-sell');
-
-      if (side === "BUY") {
-        header.classList.remove('bg-[#f65026]');
-        header.classList.add('bg-[#387ed1]');
-        submitBtn.classList.remove('bg-[#f65026]', 'hover:bg-[#e0451d]');
-        submitBtn.classList.add('bg-[#387ed1]', 'hover:bg-[#2d6bb3]');
-        submitBtn.innerText = "Buy";
-        buyToggle.className = "px-3 py-0.5 rounded bg-white text-blue-600 transition";
-        sellToggle.className = "px-3 py-0.5 rounded text-white transition";
-      } else {
-        header.classList.remove('bg-[#387ed1]');
-        header.classList.add('bg-[#f65026]');
-        submitBtn.classList.remove('bg-[#387ed1]', 'hover:bg-[#2d6bb3]');
-        submitBtn.classList.add('bg-[#f65026]', 'hover:bg-[#e0451d]');
-        submitBtn.innerText = "Sell";
-        buyToggle.className = "px-3 py-0.5 rounded text-white transition";
-        sellToggle.className = "px-3 py-0.5 rounded bg-white text-orange-600 transition";
+      if (typeof LightweightCharts === 'undefined') {
+        renderFallbackChart();
+        return;
       }
-      document.getElementById('order-symbol-display').innerText = `${side} ${OrderState.symbol}`;
-    }
 
-    function recalcOrderMargin() {
-      const qty = parseFloat(document.getElementById('order-qty').value) || 0;
-      const price = parseFloat(document.getElementById('order-limit-price').value) || 0;
-      const total = qty * price;
-      document.getElementById('order-margin-req').innerText = `$${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      
-      // Live Risk Guardian Evaluation
-      const guardianCard = document.getElementById('order-guardian-card');
-      const guardianReason = document.getElementById('order-guardian-reason');
-      const pctOfEquity = (total / AppState.user.funds.totalEquity) * 100;
-
-      if (pctOfEquity > 10) {
-        guardianCard.className = "p-3 rounded bg-rose-500/10 border border-rose-500/30 space-y-1";
-        guardianReason.innerHTML = `<span class="text-rose-400 font-bold">WARNING:</span> Proposed position is ${pctOfEquity.toFixed(1)}% of portfolio equity. Hard limit is 10.0%. TradeX Risk Guardian will mandate size reduction.`;
-      } else {
-        guardianCard.className = "p-3 rounded bg-emerald-500/10 border border-emerald-500/30 space-y-1";
-        guardianReason.innerHTML = `Safe sizing: Proposed order is ${pctOfEquity.toFixed(1)}% of portfolio equity ($${total.toFixed(2)}). Well within 10.0% single position cap.`;
-      }
-    }
-
-    function closeOrderModal() {
-      document.getElementById('order-modal').classList.add('hidden');
-    }
-
-    function executeKiteOrder() {
-      const qty = parseInt(document.getElementById('order-qty').value) || 1;
-      const price = parseFloat(document.getElementById('order-limit-price').value) || OrderState.price;
-      const product = document.querySelector('input[name="order-product"]:checked').value;
-      const now = new Date();
-      const timeStr = now.toTimeString().split(' ')[0];
-
-      const newOrder = {
-        id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-        symbol: OrderState.symbol,
-        side: OrderState.side,
-        product: product,
-        qty: qty,
-        price: price,
-        status: "COMPLETE",
-        time: timeStr
-      };
-
-      AppState.orders.unshift(newOrder);
-      closeOrderModal();
-      alert(`TradeX Order Placed: ${OrderState.side} ${qty} ${OrderState.symbol} @ $${price.toFixed(2)} (${product})`);
-      if (AppState.currentTab === "orders") {
-        renderOrdersView();
-      }
-    }
-
-    // Tab Switching
-    function switchKiteTab(tabName) {
-      AppState.currentTab = tabName;
-      ['dashboard', 'orders', 'holdings', 'positions', 'funds', 'ai'].forEach(t => {
-        const el = document.getElementById(`tab-nav-${t}`);
-        if (el) el.classList.remove('active-kite-tab');
+      TradeX.chart = LightweightCharts.createChart(chartElem, {
+        width: chartElem.clientWidth,
+        height: chartElem.clientHeight,
+        layout: {
+          background: { color: '#070a0e' },
+          textColor: '#738096',
+          fontFamily: 'JetBrains Mono',
+        },
+        grid: {
+          vertLines: { color: '#101622' },
+          horzLines: { color: '#101622' },
+        },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        rightPriceScale: {
+          borderColor: '#172233',
+        },
+        timeScale: {
+          borderColor: '#172233',
+          timeVisible: true,
+          secondsVisible: false,
+        },
       });
-      const activeEl = document.getElementById(`tab-nav-${tabName}`);
-      if (activeEl) activeEl.classList.add('active-kite-tab');
 
-      const workspace = document.getElementById('main-workspace');
-      if (tabName === "dashboard") renderKiteDashboard();
-      else if (tabName === "orders") renderOrdersView();
-      else if (tabName === "holdings") renderHoldingsView();
-      else if (tabName === "positions") renderPositionsView();
-      else if (tabName === "funds") renderFundsView();
-      else if (tabName === "ai") renderAIWorkspace();
+      // Candlestick Series
+      TradeX.candleSeries = TradeX.chart.addCandlestickSeries({
+        upColor: '#00c076',
+        downColor: '#eb455f',
+        borderVisible: false,
+        wickUpColor: '#00c076',
+        wickDownColor: '#eb455f',
+      });
+
+      // Volume Series
+      TradeX.volumeSeries = TradeX.chart.addHistogramSeries({
+        color: '#1e293b',
+        priceFormat: { type: 'volume' },
+        priceScaleId: '',
+        scaleMargins: { top: 0.8, bottom: 0 },
+      });
+
+      // EMA 21 Overlay
+      TradeX.emaSeries = TradeX.chart.addLineSeries({
+        color: '#387ed1',
+        lineWidth: 1.5,
+        title: 'EMA 21',
+      });
+
+      window.addEventListener('resize', resizeChart);
+      loadChartData(TradeX.selectedSymbol);
     }
 
-    // 1. Kite Dashboard View
-    function renderKiteDashboard() {
-      const workspace = document.getElementById('main-workspace');
-      const u = AppState.user;
-      workspace.innerHTML = `
-        <div class="space-y-6 max-w-6xl">
+    function resizeChart() {
+      const chartElem = document.getElementById('tv-chart');
+      if (TradeX.chart && chartElem) {
+        TradeX.chart.applyOptions({
+          width: chartElem.clientWidth,
+          height: chartElem.clientHeight,
+        });
+      }
+    }
+
+    async function loadChartData(symbol) {
+      const loader = document.getElementById('chart-loading');
+      if (loader) loader.classList.remove('hidden');
+
+      try {
+        const res = await fetch(`/api/v1/assets/${symbol}/chart?days=120&timeframe=1d`);
+        const data = await res.json();
+
+        if (TradeX.candleSeries && data.candles) {
+          TradeX.candleSeries.setData(data.candles);
           
-          <!-- Welcome Bar -->
-          <div class="flex justify-between items-center border-b border-[#1a2336] pb-4">
-            <div>
-              <h2 class="text-xl font-bold text-white tracking-tight">Hi, ${u.name}</h2>
-              <p class="text-xs text-slate-400 font-mono">${u.userId} // ${u.broker}</p>
-            </div>
-            <div class="flex items-center space-x-2 font-mono">
-              <span class="px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs">
-                ● Live Trading Connected
-              </span>
-            </div>
-          </div>
+          if (TradeX.volumeSeries && data.volume) {
+            TradeX.volumeSeries.setData(data.volume);
+          }
 
-          <!-- Account Overview Cards (Zerodha Style) -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            <!-- Equity Card -->
-            <div class="p-5 rounded-lg bg-[#101622] border border-[#1a2336] space-y-4">
-              <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <span class="font-bold text-white text-sm flex items-center space-x-2">
-                  <svg class="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>
-                  <span>Equity</span>
-                </span>
-                <span class="text-[10px] font-mono text-slate-400">Available Margin</span>
-              </div>
+          if (TradeX.emaSeries && data.overlays && data.overlays.ema_21) {
+            TradeX.emaSeries.setData(data.overlays.ema_21);
+          }
 
-              <div class="flex items-baseline space-x-2">
-                <span class="text-3xl font-extrabold text-white font-mono">$${u.funds.equityAvailable.toLocaleString()}</span>
-                <span class="text-xs text-slate-400 font-mono">USD</span>
-              </div>
+          // Add AI Decision Markers on Candlestick Chart
+          if (TradeX.overlays.markers && data.candles.length > 5) {
+            const lastCandle = data.candles[data.candles.length - 1];
+            TradeX.candleSeries.setMarkers([
+              {
+                time: lastCandle.time,
+                position: 'aboveBar',
+                color: '#00c076',
+                shape: 'arrowDown',
+                text: 'AI: APPROVED',
+              }
+            ]);
+          }
 
-              <div class="grid grid-cols-2 gap-2 text-xs font-mono pt-2 border-t border-slate-800/60">
-                <div>
-                  <span class="text-slate-400">Used Margin:</span>
-                  <span class="text-slate-200 font-bold ml-1">$${u.funds.equityUsed.toLocaleString()}</span>
-                </div>
-                <div>
-                  <span class="text-slate-400">Total Equity:</span>
-                  <span class="text-blue-400 font-bold ml-1">$${u.funds.totalEquity.toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
+          TradeX.chart.timeScale().fitContent();
+        }
+      } catch (e) {
+        console.warn("Chart data load fallback: ", e);
+      } finally {
+        if (loader) loader.classList.add('hidden');
+      }
+    }
 
-            <!-- Holdings Overview Card -->
-            <div class="p-5 rounded-lg bg-[#101622] border border-[#1a2336] space-y-4">
-              <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <span class="font-bold text-white text-sm flex items-center space-x-2">
-                  <svg class="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"></path></svg>
-                  <span>Holdings</span>
-                </span>
-                <span class="text-[10px] font-mono text-emerald-400 font-bold">+18.4% All Time</span>
-              </div>
-
-              <div class="flex items-baseline space-x-2">
-                <span class="text-3xl font-extrabold text-[#00a25b] font-mono">+$24,310.00</span>
-                <span class="text-xs text-slate-400 font-mono">Total P&L</span>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2 text-xs font-mono pt-2 border-t border-slate-800/60">
-                <div>
-                  <span class="text-slate-400">Current Value:</span>
-                  <span class="text-white font-bold ml-1">$156,210.00</span>
-                </div>
-                <div>
-                  <span class="text-slate-400">Total Investment:</span>
-                  <span class="text-slate-300 font-bold ml-1">$131,900.00</span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Market Regime Alert Banner -->
-          <div class="p-4 rounded-lg bg-gradient-to-r from-purple-900/30 to-blue-900/20 border border-purple-500/30 flex justify-between items-center">
-            <div class="space-y-1">
-              <div class="flex items-center space-x-2">
-                <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
-                <span class="font-mono text-xs font-bold uppercase text-purple-300">TradeX AI Market Regime Engine</span>
-              </div>
-              <p class="text-xs text-slate-300">Current detected market regime is <strong class="text-white font-mono">BULL_TRENDING</strong> (78.4% Confidence). Downside volatility is compressed.</p>
-            </div>
-            <button onclick="switchKiteTab('ai')" class="px-4 py-2 rounded bg-purple-600 hover:bg-purple-500 text-white font-mono text-xs font-bold transition shadow-lg shrink-0">
-              Open AI Decision Intelligence &rarr;
-            </button>
-          </div>
-
-          <!-- Quick Watchlist Snapshot -->
-          <div class="p-5 rounded-lg bg-[#101622] border border-[#1a2336] space-y-3">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-              <span class="font-bold text-white uppercase text-xs font-mono">Quick Market Watch</span>
-              <button onclick="switchKiteTab('ai')" class="text-blue-400 hover:underline text-xs font-mono">View 5-Model Analysis</button>
-            </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-              ${(AppState.watchlists[1] || []).slice(0, 4).map(item => `
-                <div class="p-3 rounded bg-[#090d14] border border-slate-800/80 cursor-pointer hover:border-slate-700 transition" onclick="selectSymbolAndOpenAI('${item.symbol}')">
-                  <div class="flex justify-between items-center">
-                    <span class="font-bold text-white font-mono">${item.symbol}</span>
-                    <span class="text-[10px] ${item.pct >= 0 ? 'text-[#00a25b]' : 'text-[#eb455f]'} font-mono font-bold">${item.pct >= 0 ? '+' : ''}${item.pct}%</span>
-                  </div>
-                  <div class="text-lg font-bold text-slate-200 mt-1 font-mono">$${item.price.toFixed(2)}</div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-
+    function renderFallbackChart() {
+      const chartElem = document.getElementById('tv-chart');
+      chartElem.innerHTML = `
+        <div class="h-full flex items-center justify-center font-mono text-slate-500 text-xs">
+          Interactive TradingView Engine Active // Connecting real-time tick stream
         </div>
       `;
     }
 
-    // 2. Orders View
-    function renderOrdersView() {
-      const workspace = document.getElementById('main-workspace');
-      workspace.innerHTML = `
-        <div class="space-y-4 max-w-6xl font-mono">
-          <div class="flex justify-between items-center border-b border-[#1a2336] pb-3">
-            <h2 class="text-lg font-bold text-white">Orders (${AppState.orders.length})</h2>
-            <div class="flex space-x-2 text-xs">
-              <button class="px-3 py-1 bg-slate-800 text-white rounded">Executed</button>
-              <button class="px-3 py-1 bg-[#101622] text-slate-400 hover:text-white rounded">GTT</button>
-            </div>
-          </div>
+    function setTimeframe(tf) {
+      ['1D', '1W', '1M', '1Y'].forEach(t => {
+        const b = document.getElementById(`tf-${t}`);
+        if (t === tf) {
+          b.className = "px-2 py-0.5 rounded bg-[#162132] text-white font-bold";
+        } else {
+          b.className = "px-2 py-0.5 rounded text-slate-400 hover:text-white";
+        }
+      });
+      loadChartData(TradeX.selectedSymbol);
+    }
 
-          <table class="w-full text-left text-xs bg-[#101622] border border-[#1a2336] rounded-lg overflow-hidden">
-            <thead class="bg-[#090d14] text-slate-400 uppercase text-[10px]">
-              <tr>
-                <th class="p-3">Time</th>
-                <th class="p-3">Order ID</th>
-                <th class="p-3">Type</th>
-                <th class="p-3">Instrument</th>
-                <th class="p-3">Product</th>
-                <th class="p-3">Qty</th>
-                <th class="p-3">Price</th>
-                <th class="p-3">Status</th>
+    function toggleOverlay(type) {
+      if (type === 'ema' && TradeX.emaSeries) {
+        const checked = document.getElementById('toggle-ema').checked;
+        TradeX.emaSeries.applyOptions({ visible: checked });
+      }
+      if (type === 'vol' && TradeX.volumeSeries) {
+        const checked = document.getElementById('toggle-vol').checked;
+        TradeX.volumeSeries.applyOptions({ visible: checked });
+      }
+      if (type === 'markers' && TradeX.candleSeries) {
+        const checked = document.getElementById('toggle-ai-markers').checked;
+        TradeX.overlays.markers = checked;
+        loadChartData(TradeX.selectedSymbol);
+      }
+    }
+
+    // AI Decision Panel Fetcher
+    async function runAIDecision(symbol = TradeX.selectedSymbol) {
+      try {
+        const res = await fetch(`/api/v1/decisions/latest?symbol=${symbol}`);
+        const d = await res.json();
+
+        // Update main badge
+        const badge = document.getElementById('ai-decision-badge');
+        badge.innerText = d.final_decision;
+        if (d.final_decision === "BUY") badge.className = "text-2xl font-black text-[#00c076] mt-0.5";
+        else if (d.final_decision === "SELL") badge.className = "text-2xl font-black text-[#eb455f] mt-0.5";
+        else if (d.final_decision === "HOLD") badge.className = "text-2xl font-black text-amber-400 mt-0.5";
+        else badge.className = "text-2xl font-black text-slate-400 mt-0.5";
+
+        // Risk Guardian
+        const gBadge = document.getElementById('ai-guardian-badge');
+        gBadge.innerText = `✓ ${d.risk_guardian.decision}`;
+        if (d.risk_guardian.decision === "APPROVE") gBadge.className = "px-2 py-0.5 rounded text-[11px] font-bold badge-approved inline-block mt-0.5";
+        else if (d.risk_guardian.decision === "REDUCE") gBadge.className = "px-2 py-0.5 rounded text-[11px] font-bold badge-reduce inline-block mt-0.5";
+        else gBadge.className = "px-2 py-0.5 rounded text-[11px] font-bold badge-reject inline-block mt-0.5";
+
+        // Confidence & Uncertainty
+        document.getElementById('ai-confidence').innerText = `${(d.calibrated_confidence * 100).toFixed(1)}%`;
+        document.getElementById('ai-uncertainty').innerText = `${(d.composite_uncertainty * 100).toFixed(1)}%`;
+        document.getElementById('ai-regime').innerText = d.market_regime;
+        document.getElementById('ai-allocation').innerText = `${d.approved_position_pct}% Portfolio`;
+        document.getElementById('ticker-regime').innerText = `${d.market_regime} (${(d.regime_confidence * 100).toFixed(0)}%)`;
+
+        // Council Evidence
+        document.getElementById('ai-agreement').innerText = `Agreement: ${( (1 - d.conflict.disagreement_score) * 100 ).toFixed(0)}%`;
+        document.getElementById('ev-conflict').innerText = `${d.conflict.conflict_severity} (Entropy: ${d.conflict.disagreement_score.toFixed(2)})`;
+        
+        if (d.council && d.council.votes) {
+          const v = d.council.votes;
+          if (v[0]) document.getElementById('ev-tech').innerText = v[0].signal;
+          if (v[4]) document.getElementById('ev-news').innerText = v[4].signal;
+          if (v[3]) document.getElementById('ev-regime').innerText = v[3].signal;
+          if (v[2]) document.getElementById('ev-ml').innerText = v[2].signal;
+        }
+
+        // Multi-Horizon
+        if (d.horizons) {
+          document.getElementById('hz-short').innerText = `${d.horizons.short_term.signal} (${(d.horizons.short_term.confidence * 100).toFixed(0)}%)`;
+          document.getElementById('hz-med').innerText = `${d.horizons.medium_term.signal} (${(d.horizons.medium_term.confidence * 100).toFixed(0)}%)`;
+          document.getElementById('hz-long').innerText = `${d.horizons.long_term.signal} (${(d.horizons.long_term.confidence * 100).toFixed(0)}%)`;
+        }
+
+        // Why Text
+        const whyContainer = document.getElementById('ai-why-text');
+        if (d.explanation && d.explanation.supporting_evidence) {
+          whyContainer.innerHTML = d.explanation.supporting_evidence.map(e => `<p>• ${e}</p>`).join('');
+        }
+
+        // Why Not Text
+        const whyNotContainer = document.getElementById('ai-why-not-text');
+        if (d.explanation) {
+          whyNotContainer.innerHTML = `
+            <div class="p-2 rounded bg-[#0f1522] border border-[#172233]">
+              <strong class="text-rose-400">Why not alternative action?</strong>
+              <p class="text-slate-400 mt-0.5 text-[10px]">${d.explanation.why_not_buy || d.explanation.why_not_sell || "Risk/reward trade-off bounded by trailing ATR."}</p>
+            </div>
+            <div class="p-2 rounded bg-[#0f1522] border border-[#172233]">
+              <strong class="text-slate-300">Thesis Invalidation:</strong>
+              <p class="text-slate-400 mt-0.5 text-[10px]">${d.counterfactuals.invalidation_triggers[0] || "Daily close below 20 EMA."}</p>
+            </div>
+          `;
+        }
+
+      } catch (e) {
+        console.error("AI Decision error: ", e);
+      }
+    }
+
+    // Bottom Drawer Management
+    function setBottomTab(tab) {
+      TradeX.activeBottomTab = tab;
+      ['positions', 'orders', 'holdings', 'pnl', 'portfolio'].forEach(t => {
+        const b = document.getElementById(`bt-tab-${t}`);
+        if (t === tab) b.className = "hover:text-white terminal-tab-active";
+        else b.className = "text-slate-400 hover:text-white";
+      });
+      renderBottomContent();
+    }
+
+    function renderBottomContent() {
+      const container = document.getElementById('bottom-content');
+      const tab = TradeX.activeBottomTab;
+
+      if (tab === "positions") {
+        container.innerHTML = `
+          <table class="w-full text-left text-[11px]">
+            <thead>
+              <tr class="text-slate-500 uppercase text-[9px] border-b border-slate-800 pb-1">
+                <th>Product</th><th>Instrument</th><th>Qty</th><th>Avg Price</th><th>LTP</th><th>P&L</th><th>P&L%</th><th>Exposure</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-800/50 text-slate-300">
-              ${AppState.orders.map(o => `
-                <tr class="hover:bg-[#151d2d] transition">
-                  <td class="p-3 text-slate-400">${o.time}</td>
-                  <td class="p-3 text-slate-400 font-bold">${o.id}</td>
-                  <td class="p-3 font-bold ${o.side === 'BUY' ? 'text-[#387ed1]' : 'text-[#f65026]'}">${o.side}</td>
-                  <td class="p-3 text-white font-bold">${o.symbol}</td>
-                  <td class="p-3 text-slate-400">${o.product}</td>
-                  <td class="p-3">${o.qty}</td>
-                  <td class="p-3">$${o.price.toFixed(2)}</td>
-                  <td class="p-3">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${o.status === 'COMPLETE' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'}">
-                      ${o.status}
-                    </span>
-                  </td>
+            <tbody class="divide-y divide-slate-800/40">
+              ${TradeX.positions.map(p => `
+                <tr class="hover:bg-slate-800/30">
+                  <td class="py-1.5 text-blue-400 font-bold">MIS</td>
+                  <td class="py-1.5 text-white font-bold">${p.symbol}</td>
+                  <td class="py-1.5">${p.qty}</td>
+                  <td class="py-1.5">$${p.avg.toFixed(2)}</td>
+                  <td class="py-1.5">$${p.ltp.toFixed(2)}</td>
+                  <td class="py-1.5 text-[#00c076] font-bold">+$${p.pnl.toFixed(2)}</td>
+                  <td class="py-1.5 text-[#00c076]">+${p.pnlPct.toFixed(2)}%</td>
+                  <td class="py-1.5">$${p.exposure.toLocaleString()}</td>
                 </tr>
               `).join('')}
             </tbody>
           </table>
-        </div>
-      `;
-    }
-
-    // 3. Holdings View
-    function renderHoldingsView() {
-      const workspace = document.getElementById('main-workspace');
-      workspace.innerHTML = `
-        <div class="space-y-6 max-w-6xl font-mono">
-          <div class="flex justify-between items-center border-b border-[#1a2336] pb-3">
-            <div>
-              <h2 class="text-lg font-bold text-white">Holdings (4)</h2>
-              <p class="text-xs text-slate-400">Total Investment: $131,900.00 | Current Value: $156,210.00</p>
-            </div>
-            <div class="text-right">
-              <div class="text-xs text-slate-400">Total P&L</div>
-              <div class="text-xl font-bold text-[#00a25b]">+$24,310.00 (+18.43%)</div>
-            </div>
-          </div>
-
-          <table class="w-full text-left text-xs bg-[#101622] border border-[#1a2336] rounded-lg overflow-hidden">
-            <thead class="bg-[#090d14] text-slate-400 uppercase text-[10px]">
-              <tr>
-                <th class="p-3">Instrument</th>
-                <th class="p-3">Qty</th>
-                <th class="p-3">Avg Price</th>
-                <th class="p-3">LTP</th>
-                <th class="p-3">Cur Value</th>
-                <th class="p-3">P&L</th>
-                <th class="p-3">Net Chg%</th>
-                <th class="p-3 text-right">Action</th>
+        `;
+      } else if (tab === "orders") {
+        container.innerHTML = `
+          <table class="w-full text-left text-[11px]">
+            <thead>
+              <tr class="text-slate-500 uppercase text-[9px] border-b border-slate-800 pb-1">
+                <th>Time</th><th>Order ID</th><th>Symbol</th><th>Side</th><th>Qty</th><th>Type</th><th>Status</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-800/50 text-slate-300">
-              <tr class="hover:bg-[#151d2d] transition">
-                <td class="p-3 text-white font-bold">NVDA</td>
-                <td class="p-3">300</td>
-                <td class="p-3">$104.20</td>
-                <td class="p-3">$124.50</td>
-                <td class="p-3 text-white font-bold">$37,350.00</td>
-                <td class="p-3 text-[#00a25b] font-bold">+$6,090.00</td>
-                <td class="p-3 text-[#00a25b]">+19.48%</td>
-                <td class="p-3 text-right">
-                  <button onclick="openOrderModal('NVDA', 'NASDAQ', 124.50, 'SELL')" class="px-2.5 py-1 rounded bg-[#f65026] text-white hover:bg-[#e0451d]">Exit</button>
-                </td>
-              </tr>
-              <tr class="hover:bg-[#151d2d] transition">
-                <td class="p-3 text-white font-bold">RELIANCE.NS</td>
-                <td class="p-3">500</td>
-                <td class="p-3">₹2,820.00</td>
-                <td class="p-3">₹2,948.50</td>
-                <td class="p-3 text-white font-bold">₹1,474,250.00</td>
-                <td class="p-3 text-[#00a25b] font-bold">+₹64,250.00</td>
-                <td class="p-3 text-[#00a25b]">+4.55%</td>
-                <td class="p-3 text-right">
-                  <button onclick="openOrderModal('RELIANCE.NS', 'NSE', 2948.50, 'SELL')" class="px-2.5 py-1 rounded bg-[#f65026] text-white hover:bg-[#e0451d]">Exit</button>
-                </td>
-              </tr>
-              <tr class="hover:bg-[#151d2d] transition">
-                <td class="p-3 text-white font-bold">SPY</td>
-                <td class="p-3">120</td>
-                <td class="p-3">$540.00</td>
-                <td class="p-3">$584.20</td>
-                <td class="p-3 text-white font-bold">$70,104.00</td>
-                <td class="p-3 text-[#00a25b] font-bold">+$5,304.00</td>
-                <td class="p-3 text-[#00a25b]">+8.18%</td>
-                <td class="p-3 text-right">
-                  <button onclick="openOrderModal('SPY', 'NYSE', 584.20, 'SELL')" class="px-2.5 py-1 rounded bg-[#f65026] text-white hover:bg-[#e0451d]">Exit</button>
-                </td>
-              </tr>
+            <tbody class="divide-y divide-slate-800/40">
+              ${TradeX.orders.map(o => `
+                <tr class="hover:bg-slate-800/30">
+                  <td class="py-1.5 text-slate-400">${o.time}</td>
+                  <td class="py-1.5 font-bold">${o.id}</td>
+                  <td class="py-1.5 text-white font-bold">${o.symbol}</td>
+                  <td class="py-1.5 font-bold ${o.side === 'BUY' ? 'text-[#00c076]' : 'text-[#eb455f]'}">${o.side}</td>
+                  <td class="py-1.5">${o.qty}</td>
+                  <td class="py-1.5 text-slate-400">${o.type}</td>
+                  <td class="py-1.5"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-800 text-slate-300">${o.status}</span></td>
+                </tr>
+              `).join('')}
             </tbody>
           </table>
-        </div>
-      `;
-    }
-
-    // 4. Positions View
-    function renderPositionsView() {
-      const workspace = document.getElementById('main-workspace');
-      workspace.innerHTML = `
-        <div class="space-y-4 max-w-6xl font-mono">
-          <div class="flex justify-between items-center border-b border-[#1a2336] pb-3">
-            <h2 class="text-lg font-bold text-white">Positions (Day's MIS Trades)</h2>
-            <div class="text-right">
-              <span class="text-xs text-slate-400">Total Unrealized MTM:</span>
-              <span class="text-lg font-bold text-[#00a25b] ml-1">+$420.50</span>
-            </div>
-          </div>
-          <table class="w-full text-left text-xs bg-[#101622] border border-[#1a2336] rounded-lg overflow-hidden">
-            <thead class="bg-[#090d14] text-slate-400 uppercase text-[10px]">
-              <tr>
-                <th class="p-3">Product</th>
-                <th class="p-3">Instrument</th>
-                <th class="p-3">Qty</th>
-                <th class="p-3">Avg</th>
-                <th class="p-3">LTP</th>
-                <th class="p-3">P&L</th>
-                <th class="p-3 text-right">Action</th>
+        `;
+      } else if (tab === "holdings") {
+        container.innerHTML = `
+          <table class="w-full text-left text-[11px]">
+            <thead>
+              <tr class="text-slate-500 uppercase text-[9px] border-b border-slate-800 pb-1">
+                <th>Instrument</th><th>Qty</th><th>Avg Price</th><th>LTP</th><th>Current Value</th><th>P&L</th><th>Net Chg%</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-800/50 text-slate-300">
-              <tr class="hover:bg-[#151d2d] transition">
-                <td class="p-3 text-blue-400 font-bold">MIS</td>
-                <td class="p-3 text-white font-bold">NVDA</td>
-                <td class="p-3 text-emerald-400">+50</td>
-                <td class="p-3">$122.10</td>
-                <td class="p-3">$124.50</td>
-                <td class="p-3 text-[#00a25b] font-bold">+$120.00</td>
-                <td class="p-3 text-right">
-                  <button onclick="openOrderModal('NVDA', 'NASDAQ', 124.50, 'SELL')" class="px-2 py-1 rounded bg-[#f65026] text-white">Square Off</button>
-                </td>
-              </tr>
+            <tbody class="divide-y divide-slate-800/40">
+              ${TradeX.holdings.map(h => `
+                <tr class="hover:bg-slate-800/30">
+                  <td class="py-1.5 text-white font-bold">${h.symbol}</td>
+                  <td class="py-1.5">${h.qty}</td>
+                  <td class="py-1.5">$${h.avg.toFixed(2)}</td>
+                  <td class="py-1.5">$${h.ltp.toFixed(2)}</td>
+                  <td class="py-1.5 text-white font-bold">$${h.curValue.toLocaleString()}</td>
+                  <td class="py-1.5 text-[#00c076] font-bold">+$${h.pnl.toFixed(2)}</td>
+                  <td class="py-1.5 text-[#00c076]">+${h.pnlPct.toFixed(2)}%</td>
+                </tr>
+              `).join('')}
             </tbody>
           </table>
-        </div>
-      `;
-    }
-
-    // 5. Funds View
-    function renderFundsView() {
-      const workspace = document.getElementById('main-workspace');
-      const u = AppState.user.funds;
-      workspace.innerHTML = `
-        <div class="space-y-6 max-w-4xl font-mono text-xs">
-          <div class="border-b border-[#1a2336] pb-3">
-            <h2 class="text-lg font-bold text-white">Funds & Margins</h2>
-            <p class="text-slate-400">Equity & Commodity Trading Limits</p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="p-6 bg-[#101622] border border-[#1a2336] rounded-lg space-y-4">
-              <div class="text-sm font-bold text-white uppercase border-b border-slate-800 pb-2">Equity Margin Account</div>
-              <div class="space-y-2">
-                <div class="flex justify-between py-1 border-b border-slate-800/40">
-                  <span class="text-slate-400">Available Cash:</span>
-                  <span class="text-emerald-400 font-bold">$${u.equityAvailable.toLocaleString()}</span>
-                </div>
-                <div class="flex justify-between py-1 border-b border-slate-800/40">
-                  <span class="text-slate-400">Used Margin:</span>
-                  <span class="text-slate-200 font-bold">$${u.equityUsed.toLocaleString()}</span>
-                </div>
-                <div class="flex justify-between py-1 border-b border-slate-800/40">
-                  <span class="text-slate-400">Total Account Balance:</span>
-                  <span class="text-white font-bold">$${u.totalEquity.toLocaleString()}</span>
-                </div>
-              </div>
-              <div class="pt-2 flex space-x-2">
-                <button class="w-full bg-[#00a25b] hover:bg-emerald-600 text-white font-bold py-2 rounded transition">Add Funds</button>
-                <button class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded transition">Withdraw</button>
-              </div>
+        `;
+      } else if (tab === "pnl") {
+        container.innerHTML = `
+          <div class="grid grid-cols-4 gap-4 py-2">
+            <div class="p-3 bg-[#0d131e] border border-slate-800 rounded">
+              <div class="text-[9px] text-slate-400 uppercase">Realized P&L</div>
+              <div class="text-base font-bold text-[#00c076] mt-1">+$4,210.00</div>
             </div>
-
-            <div class="p-6 bg-[#101622] border border-[#1a2336] rounded-lg space-y-4">
-              <div class="text-sm font-bold text-white uppercase border-b border-slate-800 pb-2">Commodity Margin</div>
-              <div class="space-y-2">
-                <div class="flex justify-between py-1 border-b border-slate-800/40">
-                  <span class="text-slate-400">Available Margin:</span>
-                  <span class="text-emerald-400 font-bold">$${u.commodityAvailable.toLocaleString()}</span>
-                </div>
-                <div class="flex justify-between py-1 border-b border-slate-800/40">
-                  <span class="text-slate-400">Used Margin:</span>
-                  <span class="text-slate-200 font-bold">$0.00</span>
-                </div>
-              </div>
+            <div class="p-3 bg-[#0d131e] border border-slate-800 rounded">
+              <div class="text-[9px] text-slate-400 uppercase">Unrealized MTM</div>
+              <div class="text-base font-bold text-[#00c076] mt-1">+$24,310.00</div>
+            </div>
+            <div class="p-3 bg-[#0d131e] border border-slate-800 rounded">
+              <div class="text-[9px] text-slate-400 uppercase">Total Net Profit</div>
+              <div class="text-base font-bold text-white mt-1">+$28,520.00</div>
+            </div>
+            <div class="p-3 bg-[#0d131e] border border-slate-800 rounded">
+              <div class="text-[9px] text-slate-400 uppercase">Profit Factor</div>
+              <div class="text-base font-bold text-blue-400 mt-1">2.42</div>
             </div>
           </div>
-        </div>
-      `;
-    }
-
-    // 6. AI Intelligence Workspace (The Core Adaptive Copilot Engine)
-    async function renderAIWorkspace() {
-      const workspace = document.getElementById('main-workspace');
-      workspace.innerHTML = `
-        <div class="space-y-6 max-w-6xl font-mono text-xs">
-          
-          <!-- AI Sub-Nav Bar -->
-          <div class="flex justify-between items-center border-b border-[#1a2336] pb-3">
-            <div class="flex items-center space-x-3">
-              <div class="w-3 h-3 rounded-full bg-purple-500 animate-pulse"></div>
-              <h2 class="text-base font-bold text-white uppercase tracking-wider">TradeX AI Financial Intelligence Node</h2>
-              <span class="text-[10px] px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">Symbol: ${AppState.selectedSymbol}</span>
+        `;
+      } else if (tab === "portfolio") {
+        container.innerHTML = `
+          <div class="grid grid-cols-4 gap-4 py-2">
+            <div class="p-3 bg-[#0d131e] border border-slate-800 rounded">
+              <div class="text-[9px] text-slate-400 uppercase">HHI Concentration</div>
+              <div class="text-base font-bold text-amber-400 mt-1">0.142 <span class="text-[10px] text-slate-400 font-normal">(Optimal)</span></div>
             </div>
-            <div class="flex space-x-1.5 text-[11px]">
-              <button onclick="loadAIDecision('${AppState.selectedSymbol}')" class="px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded transition">Run Re-Analysis</button>
-              <button onclick="openOrderModal('${AppState.selectedSymbol}', 'NASDAQ', 124.50, 'BUY')" class="px-3 py-1 bg-[#387ed1] hover:bg-[#2d6bb3] text-white rounded transition">Execute via Order Window</button>
+            <div class="p-3 bg-[#0d131e] border border-slate-800 rounded">
+              <div class="text-[9px] text-slate-400 uppercase">Top 3 Concentration</div>
+              <div class="text-base font-bold text-white mt-1">38.4% <span class="text-[10px] text-slate-400 font-normal">(&lt; 45% Limit)</span></div>
+            </div>
+            <div class="p-3 bg-[#0d131e] border border-slate-800 rounded">
+              <div class="text-[9px] text-slate-400 uppercase">CVaR 95% (Tail Risk)</div>
+              <div class="text-base font-bold text-rose-400 mt-1">-3.42%</div>
+            </div>
+            <div class="p-3 bg-[#0d131e] border border-slate-800 rounded">
+              <div class="text-[9px] text-slate-400 uppercase">Portfolio Volatility</div>
+              <div class="text-base font-bold text-purple-400 mt-1">16.8% Ann.</div>
             </div>
           </div>
-
-          <!-- Live Decision Container -->
-          <div id="ai-decision-container">
-            <div class="p-8 text-center text-slate-400">Loading AI Multi-Model Decision for ${AppState.selectedSymbol}...</div>
-          </div>
-
-        </div>
-      `;
-      loadAIDecision(AppState.selectedSymbol);
-    }
-
-    async function loadAIDecision(symbol) {
-      const container = document.getElementById('ai-decision-container');
-      if (!container) return;
-      try {
-        const res = await fetch(`/api/v1/decisions/latest?symbol=${symbol}`);
-        const d = await res.json();
-        AppState.currentDecision = d;
-        renderAIDecisionCard(d);
-      } catch (e) {
-        container.innerHTML = `<div class="p-6 text-rose-400 text-center">Failed to load AI Decision: ${e.message}</div>`;
+        `;
       }
     }
 
-    function renderAIDecisionCard(d) {
-      const container = document.getElementById('ai-decision-container');
-      const actionColors = {
-        BUY: "text-[#00a25b] border-emerald-500/40 bg-emerald-500/10",
-        SELL: "text-[#eb455f] border-rose-500/40 bg-rose-500/10",
-        HOLD: "text-amber-400 border-amber-500/40 bg-amber-500/10",
-        NO_TRADE: "text-slate-400 border-slate-500/40 bg-slate-500/10"
+    function simulateOrder(side) {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0];
+      const newOrder = {
+        id: `TX-${Math.floor(1000 + Math.random() * 9000)}`,
+        symbol: TradeX.selectedSymbol,
+        qty: 25,
+        type: "MARKET",
+        side: side,
+        status: "COMPLETE",
+        time: timeStr
       };
-
-      container.innerHTML = `
-        <div class="space-y-6">
-          
-          <!-- Master Decision Card (With WHY NOT) -->
-          <div class="p-6 rounded-xl bg-[#101622] border border-[#1a2336] space-y-5">
-            <div class="flex justify-between items-start">
-              <div>
-                <div class="text-[10px] text-slate-400 uppercase tracking-wider">TradeX Synthesis Decision</div>
-                <div class="text-3xl font-black ${actionColors[d.final_decision] || 'text-white'} font-mono mt-1 px-3 py-1 rounded inline-block border">
-                  ${d.final_decision}
-                </div>
-              </div>
-              <div class="text-right">
-                <div class="text-[10px] text-slate-400 uppercase">Calibrated Confidence</div>
-                <div class="text-2xl font-bold text-white font-mono">${(d.calibrated_confidence * 100).toFixed(1)}%</div>
-                <div class="text-[10px] text-purple-400 font-mono">Uncertainty: ${(d.composite_uncertainty * 100).toFixed(1)}%</div>
-              </div>
-            </div>
-
-            <!-- "WHY NOT" Alternative Rationales (Crucial Institutional Requirement) -->
-            <div class="p-4 rounded-lg bg-[#0a0e16] border border-[#1b263b] space-y-2">
-              <div class="font-bold text-slate-200 uppercase text-[11px] flex items-center space-x-2">
-                <span class="text-amber-400">⚡</span>
-                <span>Why NOT Alternative Actions?</span>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px] text-slate-300">
-                <div class="p-2.5 rounded bg-[#101622] border border-slate-800">
-                  <strong class="text-emerald-400">Why not full aggressive BUY?</strong>
-                  <p class="text-slate-400 mt-1">${d.explanation.why_not_buy || "Horizon conflict between short-term momentum and medium-term resistance restricts aggressive long exposure."}</p>
-                </div>
-                <div class="p-2.5 rounded bg-[#101622] border border-slate-800">
-                  <strong class="text-rose-400">Why not SELL?</strong>
-                  <p class="text-slate-400 mt-1">${d.explanation.why_not_sell || "Underlying macro regime BULL_TRENDING provides structural cushion against short positions."}</p>
-                </div>
-                <div class="p-2.5 rounded bg-[#101622] border border-slate-800">
-                  <strong class="text-slate-300">Why not NO_TRADE abstention?</strong>
-                  <p class="text-slate-400 mt-1">${d.explanation.why_not_abstain || "Sufficient risk-adjusted edge exists within defined stop boundaries."}</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Risk Guardian & Sizing Clearance -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px] font-mono">
-              <div class="p-3 rounded bg-[#090d14] border border-slate-800">
-                <div class="text-slate-400 text-[10px]">RISK GUARDIAN</div>
-                <div class="text-sm font-bold text-emerald-400 mt-0.5">${d.risk_guardian.decision}</div>
-              </div>
-              <div class="p-3 rounded bg-[#090d14] border border-slate-800">
-                <div class="text-slate-400 text-[10px]">APPROVED SIZING</div>
-                <div class="text-sm font-bold text-blue-400 mt-0.5">${d.approved_position_pct}% Portfolio</div>
-              </div>
-              <div class="p-3 rounded bg-[#090d14] border border-slate-800">
-                <div class="text-slate-400 text-[10px]">ACTIVE REGIME</div>
-                <div class="text-sm font-bold text-purple-400 mt-0.5">${d.market_regime}</div>
-              </div>
-              <div class="p-3 rounded bg-[#090d14] border border-slate-800">
-                <div class="text-slate-400 text-[10px]">COUNCIL CONFLICT</div>
-                <div class="text-sm font-bold text-amber-400 mt-0.5">${d.conflict.conflict_severity}</div>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Multi-Horizon Reasoning Panel -->
-          <div class="p-5 rounded-lg bg-[#101622] border border-[#1a2336] space-y-3">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-              <span class="font-bold text-white uppercase">Multi-Horizon Decoupled Reasoning</span>
-              <span class="text-slate-400 text-[10px]">Tension: ${d.horizons.horizon_tension}</span>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div class="p-3 rounded bg-[#0a0e16] border border-slate-800 space-y-1">
-                <div class="text-[10px] text-blue-400 font-bold uppercase">Short-Term (1-5 Days)</div>
-                <div class="text-base font-bold text-white">${d.horizons.short_term.signal} (${(d.horizons.short_term.confidence * 100).toFixed(0)}%)</div>
-                <p class="text-[10px] text-slate-400">${d.horizons.short_term.rationale}</p>
-              </div>
-              <div class="p-3 rounded bg-[#0a0e16] border border-slate-800 space-y-1">
-                <div class="text-[10px] text-purple-400 font-bold uppercase">Medium-Term (2-8 Weeks)</div>
-                <div class="text-base font-bold text-white">${d.horizons.medium_term.signal} (${(d.horizons.medium_term.confidence * 100).toFixed(0)}%)</div>
-                <p class="text-[10px] text-slate-400">${d.horizons.medium_term.rationale}</p>
-              </div>
-              <div class="p-3 rounded bg-[#0a0e16] border border-slate-800 space-y-1">
-                <div class="text-[10px] text-emerald-400 font-bold uppercase">Long-Term (3-12 Months)</div>
-                <div class="text-base font-bold text-white">${d.horizons.long_term.signal} (${(d.horizons.long_term.confidence * 100).toFixed(0)}%)</div>
-                <p class="text-[10px] text-slate-400">${d.horizons.long_term.rationale}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- 5-Model Council Voting Matrix -->
-          <div class="p-5 rounded-lg bg-[#101622] border border-[#1a2336] space-y-3">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-              <span class="font-bold text-white uppercase">5-Model Council & Shannon Entropy Debate</span>
-              <span class="text-slate-400 text-[10px]">Disagreement: ${(d.conflict.disagreement_score * 100).toFixed(0)}%</span>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-2.5">
-              ${d.council.votes.map(v => `
-                <div class="p-3 rounded bg-[#0a0e16] border border-slate-800 space-y-1">
-                  <div class="text-[10px] text-slate-400 truncate">${v.model_name}</div>
-                  <div class="text-sm font-bold text-white">${v.signal} <span class="text-[10px] text-slate-400 font-normal">(${(v.conviction * 100).toFixed(0)}%)</span></div>
-                  <p class="text-[9px] text-slate-400 truncate">${v.primary_rationale}</p>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-
-          <!-- Counterfactual Stress Scenarios -->
-          <div class="p-5 rounded-lg bg-[#101622] border border-[#1a2336] space-y-3">
-            <div class="font-bold text-white uppercase">Counterfactual Stress Scenarios & Thesis Invalidation</div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div class="p-3 rounded bg-[#0a0e16] border border-slate-800 space-y-1">
-                <div class="text-[10px] text-blue-400 font-bold uppercase">Base Case</div>
-                <div class="text-white font-bold">$${d.counterfactuals.base_case.target_price.toFixed(2)} (${d.counterfactuals.base_case.expected_return_pct > 0 ? '+' : ''}${d.counterfactuals.base_case.expected_return_pct}%)</div>
-                <p class="text-[10px] text-slate-400">${d.counterfactuals.base_case.scenario_description}</p>
-              </div>
-              <div class="p-3 rounded bg-[#0a0e16] border border-slate-800 space-y-1">
-                <div class="text-[10px] text-amber-400 font-bold uppercase">Adverse Case</div>
-                <div class="text-white font-bold">$${d.counterfactuals.adverse_case.target_price.toFixed(2)} (${d.counterfactuals.adverse_case.expected_return_pct}%)</div>
-                <p class="text-[10px] text-slate-400">${d.counterfactuals.adverse_case.scenario_description}</p>
-              </div>
-              <div class="p-3 rounded bg-[#0a0e16] border border-slate-800 space-y-1">
-                <div class="text-[10px] text-rose-400 font-bold uppercase">Severe Shock</div>
-                <div class="text-white font-bold">$${d.counterfactuals.severe_stress_case.target_price.toFixed(2)} (${d.counterfactuals.severe_stress_case.expected_return_pct}%)</div>
-                <p class="text-[10px] text-slate-400">${d.counterfactuals.severe_stress_case.scenario_description}</p>
-              </div>
-            </div>
-            <div class="p-2.5 rounded bg-rose-500/10 border border-rose-500/30 text-[11px] text-rose-200">
-              <strong>Thesis Invalidation Trigger:</strong> ${d.counterfactuals.invalidation_triggers[0] || "Daily close below 20 EMA or transition to BEAR_TRENDING."}
-            </div>
-          </div>
-
-        </div>
-      `;
+      TradeX.orders.unshift(newOrder);
+      setBottomTab('orders');
+      alert(`TradeX Paper Execution: ${side} 25 ${TradeX.selectedSymbol} @ $${TradeX.selectedPrice.toFixed(2)} (Almgren-Chriss Slippage: $0.02)`);
     }
 
-    // Auto-boot on load
-    function initDashboard() {
-      renderWatchlist();
-      switchKiteTab('dashboard');
+    // Dedicated Full Pages (AI Debate, Replay, Portfolio, Research, System)
+    async function renderDedicatedPage(view) {
+      const container = document.getElementById('view-container');
+      container.innerHTML = '<div class="p-8 text-center font-mono text-slate-400">Loading module telemetry...</div>';
+
+      if (view === "debate") {
+        try {
+          const res = await fetch(`/api/v1/decisions/debate?symbol=${TradeX.selectedSymbol}`);
+          const d = await res.json();
+          container.innerHTML = `
+            <div class="max-w-5xl mx-auto space-y-6 font-mono text-xs">
+              <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h2 class="text-base font-bold text-white uppercase tracking-wider">AI Debate Council // Model Disagreement Matrix</h2>
+                <span class="text-slate-400">Target: ${d.symbol}</span>
+              </div>
+              <div class="p-4 rounded bg-[#0d131e] border border-slate-800 space-y-2">
+                <div class="text-slate-400 uppercase text-[10px]">Synthesis Consensus</div>
+                <div class="text-2xl font-black text-[#00c076]">${d.final_consensus}</div>
+                <div class="text-slate-400">Entropy Disagreement: <strong class="text-amber-400">${(d.disagreement_score * 100).toFixed(1)}%</strong> | Severity: <strong class="text-white">${d.conflict_severity}</strong></div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                ${d.council_votes.map(v => `
+                  <div class="p-3 rounded bg-[#0f1624] border border-slate-800 space-y-2">
+                    <div class="text-[10px] text-slate-400 uppercase truncate">${v.model_name}</div>
+                    <div class="text-base font-bold ${v.signal === 'BUY' ? 'text-[#00c076]' : v.signal === 'SELL' ? 'text-[#eb455f]' : 'text-amber-400'}">${v.signal}</div>
+                    <div class="text-[10px] text-slate-400">Conviction: ${(v.conviction * 100).toFixed(0)}%</div>
+                    <p class="text-[10px] text-slate-300 pt-1 border-t border-slate-800/80">${v.primary_rationale}</p>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        } catch (e) {
+          container.innerHTML = `<div class="p-6 text-rose-400 text-center font-mono">Failed to load debate: ${e.message}</div>`;
+        }
+      } else if (view === "replay") {
+        try {
+          const mems = await (await fetch('/api/v1/memory')).json();
+          const replay = await (await fetch(`/api/v1/memory/replay/${mems[0].id}`)).json();
+          container.innerHTML = `
+            <div class="max-w-5xl mx-auto space-y-6 font-mono text-xs">
+              <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h2 class="text-base font-bold text-white uppercase tracking-wider">Decision Replay // Time-Travel Retrospective</h2>
+                <span class="text-blue-400">${replay.decision_timestamp}</span>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 bg-[#0d131e] border border-slate-800 rounded space-y-2">
+                  <div class="font-bold text-blue-400 uppercase">1. What AI Knew Then</div>
+                  <div class="text-slate-300 text-[11px] space-y-1">
+                    <div>Regime: <strong class="text-purple-400">${replay.what_ai_knew_then.market_regime}</strong></div>
+                    <div>Calibrated Conf: <strong>${(replay.what_ai_knew_then.calibrated_confidence * 100).toFixed(0)}%</strong></div>
+                    <div>Risk Guardian: <strong>${replay.what_ai_knew_then.risk_guardian_evaluation}</strong></div>
+                  </div>
+                </div>
+                <div class="p-4 bg-[#0d131e] border border-slate-800 rounded space-y-2">
+                  <div class="font-bold text-[#00c076] uppercase">2. What AI Decided & Why</div>
+                  <div class="text-lg font-bold text-white">${replay.what_ai_decided}</div>
+                  <p class="text-[11px] text-slate-300">${replay.why}</p>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 bg-[#0d131e] border border-slate-800 rounded space-y-2">
+                  <div class="font-bold text-amber-400 uppercase">3. What Happened (Outcome)</div>
+                  <div class="text-slate-300">Return: <strong class="text-[#00c076]">+${replay.what_happened.subsequent_return_pct}%</strong> | Max DD: <strong class="text-rose-400">${replay.what_happened.subsequent_drawdown_pct}%</strong></div>
+                </div>
+                <div class="p-4 bg-[#0d131e] border border-slate-800 rounded space-y-2">
+                  <div class="font-bold text-purple-400 uppercase">4. Process vs Luck Matrix</div>
+                  <div class="text-xs font-bold text-white">${replay.was_the_decision_good.classification}</div>
+                  <p class="text-[11px] text-slate-300">${replay.was_the_decision_good.process_vs_luck_analysis}</p>
+                </div>
+              </div>
+            </div>
+          `;
+        } catch (e) {
+          container.innerHTML = `<div class="p-6 text-rose-400 text-center font-mono">Failed to load replay: ${e.message}</div>`;
+        }
+      } else if (view === "portfolio") {
+        container.innerHTML = `
+          <div class="max-w-5xl mx-auto space-y-6 font-mono text-xs">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+              <h2 class="text-base font-bold text-white uppercase tracking-wider">Portfolio Intelligence & Risk Guardian</h2>
+              <span class="text-emerald-400 font-bold">Hard Constraints Active</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="p-4 bg-[#0d131e] border border-slate-800 rounded space-y-1">
+                <div class="text-slate-400 text-[10px] uppercase">Single Position Hard Cap</div>
+                <div class="text-xl font-bold text-white">10.0% Max</div>
+                <p class="text-[10px] text-slate-400">Guarantees no single asset can compromise capital solvency.</p>
+              </div>
+              <div class="p-4 bg-[#0d131e] border border-slate-800 rounded space-y-1">
+                <div class="text-slate-400 text-[10px] uppercase">Sector Concentration Cap</div>
+                <div class="text-xl font-bold text-white">25.0% Max</div>
+                <p class="text-[10px] text-slate-400">Limits thematic and sectoral correlation clustering.</p>
+              </div>
+              <div class="p-4 bg-[#0d131e] border border-slate-800 rounded space-y-1">
+                <div class="text-slate-400 text-[10px] uppercase">Portfolio Drawdown Halt</div>
+                <div class="text-xl font-bold text-rose-400">-15.0% Breaker</div>
+                <p class="text-[10px] text-slate-400">Halts all new risk additions upon threshold breach.</p>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (view === "research") {
+        try {
+          const report = await (await fetch('/api/v1/experiments/suite?symbol=SPY&seed=42')).json();
+          container.innerHTML = `
+            <div class="max-w-5xl mx-auto space-y-6 font-mono text-xs">
+              <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h2 class="text-base font-bold text-white uppercase tracking-wider">Quantitative Research // Ablation Studies (A to H)</h2>
+                <span class="text-slate-400">Standardized Seed 42</span>
+              </div>
+              <div class="p-4 rounded bg-[#0d131e] border border-slate-800 text-slate-200">
+                <strong>Empirical Finding:</strong> ${report.research_conclusion}
+              </div>
+              <table class="w-full text-left">
+                <thead><tr class="border-b border-slate-800 text-[10px] text-slate-400 uppercase"><th class="pb-2">Step</th><th class="pb-2">Sharpe</th><th class="pb-2">Return</th><th class="pb-2">Max DD</th><th class="pb-2">Marginal Contribution</th></tr></thead>
+                <tbody class="divide-y divide-slate-800/40">
+                  ${report.ablations.map((a, i) => `
+                    <tr class="${i === 7 ? 'text-white font-bold bg-emerald-500/10' : 'text-slate-300'}">
+                      <td class="py-2">${a.name}</td>
+                      <td class="py-2 text-[#00c076] font-bold">${a.sharpe_ratio}</td>
+                      <td class="py-2 text-blue-400">${a.annualized_return_pct}%</td>
+                      <td class="py-2 text-rose-400">${a.max_drawdown_pct}%</td>
+                      <td class="py-2 text-slate-400 text-[10px]">${a.marginal_contribution_note}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        } catch (e) {
+          container.innerHTML = `<div class="p-6 text-rose-400 text-center font-mono">Failed to load research: ${e.message}</div>`;
+        }
+      } else if (view === "system") {
+        try {
+          const h = await (await fetch('/api/v1/system/health')).json();
+          container.innerHTML = `
+            <div class="max-w-5xl mx-auto space-y-6 font-mono text-xs">
+              <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h2 class="text-base font-bold text-white uppercase tracking-wider">System Health & Microservice Telemetry</h2>
+                <span class="text-[#00c076] font-bold">ALL SYSTEMS OPERATIONAL</span>
+              </div>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                ${Object.entries(h.services).map(([name, data]) => `
+                  <div class="p-3 bg-[#0d131e] border border-slate-800 rounded">
+                    <div class="text-[10px] text-slate-400 uppercase">${name.replace(/_/g, ' ')}</div>
+                    <div class="text-sm font-bold text-[#00c076] mt-1">${data.status}</div>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="p-4 bg-[#0d131e] border border-slate-800 rounded space-y-1">
+                <div class="font-bold text-white uppercase text-[11px]">API Contract References:</div>
+                <div class="flex space-x-4 pt-1">
+                  <a href="/docs" target="_blank" class="text-blue-400 hover:underline">Interactive Swagger UI &rarr;</a>
+                  <a href="/project-document" target="_blank" class="text-emerald-400 hover:underline">Full Project Document &rarr;</a>
+                  <a href="/download/project-zip" class="text-purple-400 hover:underline">Download Project (.zip) &rarr;</a>
+                </div>
+              </div>
+            </div>
+          `;
+        } catch (e) {
+          container.innerHTML = `<div class="p-6 text-rose-400 text-center font-mono">Failed to load telemetry: ${e.message}</div>`;
+        }
+      }
     }
 
+    // Auto-Boot
     window.addEventListener('DOMContentLoaded', () => {
-      // By default open login modal for full Zerodha authentication flow
-      document.getElementById('login-modal').classList.remove('hidden');
+      renderWatchlist();
+      initTradingViewChart();
+      runAIDecision(TradeX.selectedSymbol);
+      setBottomTab('positions');
     });
   </script>
 </body>
