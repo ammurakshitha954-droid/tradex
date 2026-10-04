@@ -21,6 +21,7 @@ from .api.v1.system import router as system_router
 logger = get_logger("main")
 
 DASHBOARD_PATH = Path(__file__).parent / "templates" / "dashboard.html"
+PROJECT_DOC_PATH = Path(__file__).parent / "templates" / "project_document.html"
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -74,6 +75,15 @@ def dashboard():
         return HTMLResponse(content=DASHBOARD_PATH.read_text(encoding="utf-8"))
     return HTMLResponse(
         content="<h1>Adaptive AI Trading Decision-Support System</h1><p>Dashboard template not found.</p>"
+    )
+
+
+@app.get("/project-document", response_class=HTMLResponse)
+def project_document():
+    if PROJECT_DOC_PATH.exists():
+        return HTMLResponse(content=PROJECT_DOC_PATH.read_text(encoding="utf-8"))
+    return HTMLResponse(
+        content="<h1>Adaptive AI Trading Decision-Support System</h1><p>Project documentation template not found.</p>"
     )
 
 
