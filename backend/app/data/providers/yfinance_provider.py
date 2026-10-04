@@ -2,7 +2,7 @@
 Real-world market data provider implementation using yfinance with graceful fallback.
 """
 from typing import List, Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 import yfinance as yf
 from .base import MarketDataProvider, NewsDataProvider, FundamentalDataProvider, AssetMetadata, NewsItem
@@ -88,7 +88,7 @@ class YFinanceProvider(MarketDataProvider, NewsDataProvider, FundamentalDataProv
                     "change": round(change, 2),
                     "pct_change": round(pct_change, 2),
                     "volume": int(getattr(fast_info, "last_volume", 0) or 0),
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
         except Exception as e:
             logger.warning(f"Error fetching fast info for {symbol}: {e}. Using fallback.")

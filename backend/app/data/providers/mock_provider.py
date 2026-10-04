@@ -3,7 +3,7 @@ Deterministic and reproducible mock market data and news provider.
 Enables offline development, reproducible unit/integration tests, and scenario stress testing.
 """
 from typing import List, Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import numpy as np
 import pandas as pd
 from .base import MarketDataProvider, NewsDataProvider, FundamentalDataProvider, AssetMetadata, NewsItem
@@ -130,7 +130,7 @@ class MockDataProvider(MarketDataProvider, NewsDataProvider, FundamentalDataProv
         limit: int = 10
     ) -> List[NewsItem]:
         clean_sym = symbol.upper()
-        now = end_date or datetime.utcnow()
+        now = end_date or datetime.now(timezone.utc)
         
         sample_headlines = [
             (f"{clean_sym} reports quarterly revenue surge driven by enterprise cloud demand", "earnings", 0.72),

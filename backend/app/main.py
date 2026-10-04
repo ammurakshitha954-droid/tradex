@@ -2,7 +2,9 @@
 FastAPI Main Application Entry Point.
 Adaptive AI Trading Decision-Support System Backend API.
 """
-from fastapi import FastAPI
+from pathlib import Path
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
 from .core.logging import get_logger
@@ -17,6 +19,8 @@ from .api.v1.backtest import router as backtest_router
 from .api.v1.system import router as system_router
 
 logger = get_logger("main")
+
+DASHBOARD_PATH = Path(__file__).parent / "templates" / "dashboard.html"
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -49,10 +53,37 @@ app.include_router(system_router, prefix=api_v1)
 
 
 @app.get("/")
-def root():
+def root(request: Request):
+    accept = request.headers.get("accept", "")
+    # If explicitly requested by a browser navigating directly
+    if "text/html" in accept and "application/json" not in accept:
+        if DASHBOARD_PATH.exists():
+            return HTMLResponse(content=DASHBOARD_PATH.read_text(encoding="utf-8"))
+    return {
+        "system": settings.PROJECT_NAME,
+        "status": "OPERATIONAL",
+        "documentation": "/docs",
+        "api_v1": api_v1,
+        "dashboard": "/dashboard",
+    }
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard():
+    if DASHBOARD_PATH.exists():
+        return HTMLResponse(content=DASHBOARD_PATH.read_text(encoding="utf-8"))
+    return HTMLResponse(
+        content="<h1>Adaptive AI Trading Decision-Support System</h1><p>Dashboard template not found.</p>"
+    )
+
+
+@app.get("/api/status")
+def api_status():
     return {
         "system": settings.PROJECT_NAME,
         "status": "OPERATIONAL",
         "documentation": "/docs",
         "api_v1": api_v1,
     }
+
+

@@ -1,7 +1,7 @@
 """
 Unit tests for Deterministic Quantitative Features: Technical, Volatility, Volume, and Risk Metrics.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pytest
 import numpy as np
 import pandas as pd
@@ -15,7 +15,7 @@ from backend.app.features.risk_metrics import RiskMetricsCalculator
 
 def test_mock_provider_and_validator():
     provider = MockDataProvider(seed=123)
-    end = datetime.utcnow()
+    end = datetime.now(timezone.utc)
     start = end - timedelta(days=120)
     df = provider.get_historical_ohlcv("AAPL", start, end)
 
@@ -28,7 +28,7 @@ def test_mock_provider_and_validator():
 
 def test_technical_indicators_deterministic():
     provider = MockDataProvider(seed=42)
-    end = datetime.utcnow()
+    end = datetime.now(timezone.utc)
     start = end - timedelta(days=250)
     df = provider.get_historical_ohlcv("MSFT", start, end)
     
@@ -49,7 +49,7 @@ def test_technical_indicators_deterministic():
 
 def test_volatility_indicators():
     provider = MockDataProvider(seed=99)
-    end = datetime.utcnow()
+    end = datetime.now(timezone.utc)
     start = end - timedelta(days=100)
     df = provider.get_historical_ohlcv("NVDA", start, end)
     
@@ -64,7 +64,7 @@ def test_volatility_indicators():
 
 def test_volume_indicators():
     provider = MockDataProvider(seed=7)
-    end = datetime.utcnow()
+    end = datetime.now(timezone.utc)
     start = end - timedelta(days=80)
     df = provider.get_historical_ohlcv("SPY", start, end)
     

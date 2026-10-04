@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adaptive AI Trading Decision-Support System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: "#080b10",
+            surface: "#0f141e",
+            "surface-raised": "#151c2a",
+            "surface-card": "#101623",
+            border: "#1e293b",
+            trade: {
+              buy: "#10b981",
+              sell: "#f43f5e",
+              hold: "#f59e0b",
+              abstain: "#64748b"
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #080b10; color: #f8fafc; font-family: 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b0e15; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+    .terminal-card { background: #0c121d; border: 1px solid #1a2436; border-radius: 6px; }
+    .glow-buy { box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25); }
+    .glow-sell { box-shadow: 0 0 25px -5px rgba(244, 63, 94, 0.25); }
+    .glow-hold { box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.25); }
+    .glow-abstain { box-shadow: 0 0 25px -5px rgba(100, 116, 139, 0.25); }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+  <!-- TOP HEADER -->
+  <header class="border-b border-[#182338] bg-[#090d14]/95 backdrop-blur sticky top-0 z-50">
+    <div class="flex items-center justify-between px-5 py-2.5 text-xs">
+      <div class="flex items-center space-x-3">
+        <div class="h-7 w-7 rounded bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center font-black text-white text-sm shadow-md">
+          AG
+        </div>
+        <div>
+          <span class="font-extrabold tracking-wider text-slate-100 text-sm">ANTIGRAVITY // ADAPTIVE AI</span>
+          <span class="text-[10px] text-slate-400 font-mono ml-2 uppercase tracking-wider">TRADING DECISION-SUPPORT</span>
+        </div>
+        <div class="hidden md:flex items-center space-x-1 pl-3 border-l border-slate-800 text-[11px] text-slate-400 font-mono">
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>DETERMINISTIC QUANT LAYER ONLINE</span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <div id="regime-banner" class="px-3 py-1 rounded border text-xs font-mono font-bold text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
+          MARKET REGIME: BULL_TRENDING (78%)
+        </div>
+        <div class="hidden lg:flex items-center px-2.5 py-1 rounded bg-[#111724] border border-[#1d273a] text-slate-300 font-mono text-[11px] space-x-1.5">
+          <span class="text-indigo-400 font-bold">RISK GUARDIAN:</span>
+          <span class="text-emerald-400 font-bold">VETO ACTIVE</span>
+        </div>
+        <div id="utc-clock" class="font-mono text-slate-400 text-xs">UTC --:--:--</div>
+        <button onclick="syncAll()" class="px-2.5 py-1 rounded bg-[#131b2a] hover:bg-[#1a2538] border border-[#233149] text-slate-200 text-xs font-mono">
+          SYNC
+        </button>
+      </div>
+    </div>
+
+    <!-- Ticker Tape -->
+    <div id="ticker-tape" class="bg-[#0b0f17] border-t border-[#141b27] px-5 py-1.5 overflow-x-auto flex items-center space-x-6 text-[11px] font-mono no-scrollbar">
+      <span class="text-slate-400 font-bold uppercase tracking-wider shrink-0">WATCHLIST:</span>
+      <div id="watchlist-items" class="flex items-center space-x-4">
+        <span class="text-slate-500">Loading live ticks...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN APPLICATION LAYOUT -->
+  <div class="flex flex-1 overflow-hidden">
+    <!-- NAVIGATION SIDEBAR -->
+    <nav class="w-64 bg-[#0a0e16] border-r border-[#182338] flex flex-col justify-between h-[calc(100vh-85px)] shrink-0 py-3">
+      <div class="space-y-1 px-2 overflow-y-auto">
+        <div class="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+          DECISION INTELLIGENCE
+        </div>
+        <button onclick="switchTab('command_center')" class="nav-btn w-full text-left px-3 py-2 rounded text-xs font-medium transition-all text-blue-400 bg-blue-600/15 border border-blue-500/30 font-semibold" data-tab="command_center">
+          1. AI Command Center
+        </button>
+        <button onclick="switchTab('decision_card')" class="nav-btn w-full text-left px-3 py-2 rounded text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-[#121824]" data-tab="decision_card">
+          2. Decision & Why Not
+        </button>
+        <button onclick="switchTab('counterfactuals')" class="nav-btn w-full text-left px-3 py-2 rounded text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-[#121824]" data-tab="counterfactuals">
+          3. "What Would Change Mind?"
+        </button>
+        <button onclick="switchTab('ai_debate')" class="nav-btn w-full text-left px-3 py-2 rounded text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-[#121824]" data-tab="ai_debate">
+          4. AI Debate & Conflict
+        </button>
+        <button onclick="switchTab('market_brain')" class="nav-btn w-full text-left px-3 py-2 rounded text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-[#121824]" data-tab="market_brain">
+          5. Market Brain (Graph)
+        </button>
+        <button onclick="switchTab('regime_timeline')" class="nav-btn w-full text-left px-3 py-2 rounded text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-[#121824]" data-tab="regime_timeline">
+          6. Regime Timeline
+        </button>
+        <button onclick="switchTab('portfolio_risk')" class="nav-btn w-full text-left px-3 py-2 rounded text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-[#121824]" data-tab="portfolio_risk">
+          7. Portfolio & Risk Guardian
+        </button>
+        <button onclick="switchTab('decision_replay')" class="nav-btn w-full text-left px-3 py-2 rounded text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-[#121824]" data-tab="decision_replay">
+          8. Decision Replay (Time Travel)
+        </button>
+        <button onclick="switchTab('backtesting')" class="nav-btn w-full text-left px-3 py-2 rounded text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-[#121824]" data-tab="backtesting">
+          9. Backtest Strategy Lab
+        </button>
+        <button onclick="switchTab('experiments')" class="nav-btn w-full text-left px-3 py-2 rounded text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-[#121824]" data-tab="experiments">
+          10. Ablation & Benchmarks
+        </button>
+        <button onclick="switchTab('memory_lessons')" class="nav-btn w-full text-left px-3 py-2 rounded text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-[#121824]" data-tab="memory_lessons">
+          11. Contextual Memory & Lessons
+        </button>
+        <button onclick="switchTab('system_health')" class="nav-btn w-full text-left px-3 py-2 rounded text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-[#121824]" data-tab="system_health">
+          12. System Health & Telemetry
+        </button>
+      </div>
+
+      <div className="p-3 mx-2 rounded border border-[#172132] bg-[#0c111a] text-[11px] font-mono text-slate-400 space-y-1">
+        <div class="flex justify-between"><span>VERSION:</span><span class="text-blue-400 font-bold">v2.4-ADAPTIVE</span></div>
+        <div class="flex justify-between"><span>CALCS:</span><span class="text-emerald-400 font-medium">DETERMINISTIC</span></div>
+        <div class="flex justify-between"><span>API DOCS:</span><a href="/docs" target="_blank" class="text-purple-400 hover:underline font-bold">/docs</a></div>
+      </div>
+    </nav>
+
+    <!-- CONTENT DISPLAY VIEWPORT -->
+    <main class="flex-1 p-6 overflow-y-auto max-h-[calc(100vh-85px)] space-y-6">
+      <!-- DYNAMIC SECTION CONTAINER -->
+      <div id="view-container" class="space-y-6">
+        <!-- Rendered by JavaScript -->
+      </div>
+    </main>
+  </div>
+
+  <!-- CORE JAVASCRIPT ENGINE -->
+  <script>
+    let activeTab = 'command_center';
+    let currentSymbol = 'NVDA';
+    let currentDecision = null;
+    let currentPulse = null;
+    let currentPortfolio = null;
+
+    // Update Clock
+    setInterval(() => {
+      document.getElementById('utc-clock').innerText = new Date().toUTCString().slice(17, 25) + ' UTC';
+    }, 1000);
+
+    // Switch Tab
+    function switchTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        if (btn.dataset.tab === tab) {
+          btn.className = 'nav-btn w-full text-left px-3 py-2 rounded text-xs font-medium transition-all text-blue-400 bg-blue-600/15 border border-blue-500/30 font-semibold';
+        } else {
+          btn.className = 'nav-btn w-full text-left px-3 py-2 rounded text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-[#121824]';
+        }
+      });
+      renderCurrentView();
+    }
+
+    // Select Symbol
+    function selectSymbol(sym) {
+      currentSymbol = sym;
+      fetchDecision(sym);
+    }
+
+    // Fetch Pulse
+    async function fetchPulse() {
+      try {
+        const res = await fetch('/api/v1/market/pulse');
+        const data = await res.json();
+        currentPulse = data;
+        const banner = document.getElementById('regime-banner');
+        banner.innerText = `MARKET REGIME: ${data.market_regime} (${(data.regime_confidence * 100).toFixed(0)}%)`;
+        
+        // Render Ticker Tape
+        const wl = document.getElementById('watchlist-items');
+        wl.innerHTML = data.watchlist.map(item => `
+          <button onclick="selectSymbol('${item.symbol}')" class="flex items-center space-x-1.5 px-2 py-0.5 rounded transition-all ${item.symbol === currentSymbol ? 'bg-blue-600/25 border border-blue-500/40 text-blue-300' : 'text-slate-300 hover:bg-[#131926]'}">
+            <span class="font-bold">${item.symbol}</span>
+            <span>$${item.price.toFixed(2)}</span>
+            <span class="${item.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${item.change >= 0 ? '+' : ''}${item.pct_change.toFixed(2)}%</span>
+          </button>
+        `).join('');
+      } catch (e) {
+        console.error('Pulse error:', e);
+      }
+    }
+
+    // Fetch Decision
+    async function fetchDecision(sym) {
+      try {
+        const res = await fetch(`/api/v1/decisions/latest?symbol=${sym}`);
+        const data = await res.json();
+        currentDecision = data;
+        renderCurrentView();
+      } catch (e) {
+        console.error('Decision error:', e);
+      }
+    }
+
+    // Fetch Portfolio
+    async function fetchPortfolio() {
+      try {
+        const res = await fetch('/api/v1/portfolio');
+        currentPortfolio = await res.json();
+      } catch (e) {
+        console.error('Portfolio error:', e);
+      }
+    }
+
+    async function syncAll() {
+      await fetchPulse();
+      await fetchPortfolio();
+      await fetchDecision(currentSymbol);
+    }
+
+    // Render Current View
+    function renderCurrentView() {
+      const container = document.getElementById('view-container');
+      if (activeTab === 'command_center') {
+        container.innerHTML = renderCommandCenter();
+      } else if (activeTab === 'decision_card') {
+        container.innerHTML = renderDecisionCard();
+      } else if (activeTab === 'counterfactuals') {
+        container.innerHTML = renderCounterfactuals();
+      } else if (activeTab === 'ai_debate') {
+        container.innerHTML = renderDebateView();
+      } else if (activeTab === 'market_brain') {
+        container.innerHTML = renderMarketBrain();
+      } else if (activeTab === 'regime_timeline') {
+        renderRegimeTimelineView();
+      } else if (activeTab === 'portfolio_risk') {
+        container.innerHTML = renderPortfolioView();
+      } else if (activeTab === 'decision_replay') {
+        renderDecisionReplayView();
+      } else if (activeTab === 'backtesting') {
+        renderBacktestView();
+      } else if (activeTab === 'experiments') {
+        renderExperimentsView();
+      } else if (activeTab === 'memory_lessons') {
+        renderMemoryView();
+      } else if (activeTab === 'system_health') {
+        renderSystemHealthView();
+      }
+    }
+
+    // Render 1: Command Center
+    function renderCommandCenter() {
+      if (!currentDecision) return '<div class="terminal-card p-6 text-center text-xs font-mono">Loading Decision Intelligence...</div>';
+      return `
+        <div class="space-y-6">
+          <div class="terminal-card p-5 bg-[#0a0f18] flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="text-sm font-bold text-white uppercase">BENCHMARK: ${currentPulse?.benchmark || 'SPY'}</span>
+                <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/30 font-bold">${currentPulse?.market_regime}</span>
+              </div>
+              <p class="text-slate-400 text-xs mt-1">${currentPulse?.key_macro_drivers?.[0] || 'Statistical dispersion within normal volatility bounds.'}</p>
+            </div>
+            <div class="flex items-center space-x-4">
+              <div><span class="text-[10px] text-slate-400 uppercase">Regime Stability</span><div class="text-base font-bold text-emerald-400">${(currentPulse?.stability_score * 100 || 80).toFixed(0)}%</div></div>
+              <div class="border-l border-slate-800 pl-4"><span class="text-[10px] text-slate-400 uppercase">Market Breadth</span><div class="text-base font-bold text-blue-400">${currentPulse?.market_breadth_advance_pct || 65}% Adv</div></div>
+            </div>
+          </div>
+          ${renderDecisionCardHTML(currentDecision)}
+          ${renderHorizonsHTML(currentDecision.horizons)}
+          ${renderCounterfactualsHTML(currentDecision.counterfactuals)}
+        </div>
+      `;
+    }
+
+    // Render 2: Decision Card
+    function renderDecisionCard() {
+      if (!currentDecision) return '<div class="terminal-card p-6 text-center text-xs font-mono">Loading...</div>';
+      return `
+        <div class="space-y-6">
+          ${renderDecisionCardHTML(currentDecision)}
+          ${renderHorizonsHTML(currentDecision.horizons)}
+        </div>
+      `;
+    }
+
+    function renderDecisionCardHTML(dec) {
+      const act = dec.final_decision;
+      const isBuy = act === 'BUY';
+      const isSell = act === 'SELL';
+      const isHold = act === 'HOLD';
+      const badgeClass = isBuy ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 glow-buy' :
+                         isSell ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 glow-sell' :
+                         isHold ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 glow-hold' :
+                         'bg-slate-500/20 text-slate-300 border-slate-500/40 glow-abstain';
+
+      const risk = dec.risk_guardian.decision;
+      const riskClass = risk === 'APPROVE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+                        risk === 'REDUCE' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+                        'bg-rose-500/10 text-rose-400 border-rose-500/30';
+
+      return `
+        <div class="terminal-card border-[#1f2b40] bg-gradient-to-b from-[#0f1523] to-[#0a0e18] shadow-2xl p-6 rounded-lg space-y-6">
+          <div class="flex flex-wrap items-center justify-between gap-4 border-b border-[#1b2537] pb-4">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="text-3xl font-black text-white">${dec.symbol}</span>
+                <span class="text-base font-mono text-slate-400">$${dec.current_price.toFixed(2)}</span>
+              </div>
+              <div class="text-[11px] font-mono text-slate-400 mt-1">
+                REGIME: <strong class="text-purple-400">${dec.market_regime}</strong> • MODEL: <strong>${dec.model_version}</strong>
+              </div>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div class="px-5 py-2.5 rounded-md border flex items-center space-x-2 font-black text-xl tracking-wider ${badgeClass}">
+                <span>${act}</span>
+              </div>
+              <div class="px-3 py-2 rounded border text-xs font-mono font-bold ${riskClass}">
+                RISK GUARDIAN: ${risk}
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-mono">
+            <div class="p-3 rounded bg-[#121927] border border-[#1b263b]">
+              <div class="text-slate-400 text-[10px] uppercase">Calibrated Confidence</div>
+              <div class="text-xl font-bold text-blue-400 mt-1">${(dec.calibrated_confidence * 100).toFixed(1)}%</div>
+              <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                <div class="bg-blue-500 h-full rounded-full" style="width: ${dec.calibrated_confidence * 100}%"></div>
+              </div>
+            </div>
+            <div class="p-3 rounded bg-[#121927] border border-[#1b263b]">
+              <div class="text-slate-400 text-[10px] uppercase">Composite Uncertainty</div>
+              <div class="text-xl font-bold text-amber-400 mt-1">${(dec.composite_uncertainty * 100).toFixed(1)}%</div>
+              <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                <div class="bg-amber-500 h-full rounded-full" style="width: ${dec.composite_uncertainty * 100}%"></div>
+              </div>
+            </div>
+            <div class="p-3 rounded bg-[#121927] border border-[#1b263b]">
+              <div class="text-slate-400 text-[10px] uppercase">Approved Allocation</div>
+              <div class="text-xl font-bold text-emerald-400 mt-1">${dec.approved_position_pct.toFixed(1)}%</div>
+              <div class="text-[10px] text-slate-400 mt-1">Exp Ret: ${dec.expected_return_pct > 0 ? '+' : ''}${dec.expected_return_pct.toFixed(1)}%</div>
+            </div>
+            <div class="p-3 rounded bg-[#121927] border border-[#1b263b]">
+              <div class="text-slate-400 text-[10px] uppercase">Council Consensus</div>
+              <div class="text-sm font-bold text-slate-200 mt-1">${dec.council.consensus_signal} (${dec.conflict.conflict_severity})</div>
+              <div class="text-[10px] text-slate-400 mt-1">Agreement: ${(dec.conflict.agreement_score * 100).toFixed(0)}%</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+            <div class="p-4 rounded bg-[#0b101a] border border-[#172236] space-y-2">
+              <div class="font-bold text-emerald-400 uppercase tracking-wider text-[11px]">WHY THIS DECISION? (DOMINANT EVIDENCE)</div>
+              <ul class="space-y-1.5 text-slate-300">
+                ${dec.explanation.why_this_decision.map(p => `
+                  <li class="flex items-start space-x-2">
+                    <span class="text-emerald-400 font-bold shrink-0">✓</span>
+                    <span>${p}</span>
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+
+            <div class="p-4 rounded bg-[#140b10] border border-[#301622] space-y-2">
+              <div class="font-bold text-rose-400 uppercase tracking-wider text-[11px]">WHY NOT? (CONFLICTS & ABSTENTION REASONS)</div>
+              <ul class="space-y-1.5 text-rose-200">
+                ${dec.explanation.why_not.map(p => `
+                  <li class="flex items-start space-x-2">
+                    <span class="text-rose-400 font-bold shrink-0">✕</span>
+                    <span>${p}</span>
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderHorizonsHTML(horizons) {
+      if (!horizons) return '';
+      return `
+        <div class="terminal-card p-5 bg-[#0a0f17] border-[#192438] space-y-4 font-mono text-xs">
+          <div class="flex items-center justify-between border-b border-[#162032] pb-3">
+            <span class="uppercase tracking-wider text-slate-400 font-bold">MULTI-HORIZON REASONING ENGINE</span>
+            <span class="text-slate-400">Agreement: <strong class="${horizons.horizon_agreement ? 'text-emerald-400' : 'text-amber-400'}">${(horizons.agreement_score * 100).toFixed(0)}%</strong> | Strongest: <strong class="text-blue-400">${horizons.strongest_horizon}</strong></span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="p-3.5 rounded bg-[#0d131f] border border-[#182335] space-y-2">
+              <div class="flex justify-between font-bold"><span>Short-Term (1-5d)</span><span class="text-emerald-400">${horizons.short_term.action} (${(horizons.short_term.conviction * 100).toFixed(0)}%)</span></div>
+              <p class="text-[11px] text-slate-300">• ${horizons.short_term.drivers[0]}</p>
+            </div>
+            <div class="p-3.5 rounded bg-[#0d131f] border border-[#182335] space-y-2">
+              <div class="flex justify-between font-bold"><span>Medium-Term (2-8w)</span><span class="text-blue-400">${horizons.medium_term.action} (${(horizons.medium_term.conviction * 100).toFixed(0)}%)</span></div>
+              <p class="text-[11px] text-slate-300">• ${horizons.medium_term.drivers[0]}</p>
+            </div>
+            <div class="p-3.5 rounded bg-[#0d131f] border border-[#182335] space-y-2">
+              <div class="flex justify-between font-bold"><span>Long-Term (3-12m)</span><span class="text-purple-400">${horizons.long_term.action} (${(horizons.long_term.conviction * 100).toFixed(0)}%)</span></div>
+              <p class="text-[11px] text-slate-300">• ${horizons.long_term.drivers[0]}</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCounterfactuals() {
+      if (!currentDecision) return '<div class="terminal-card p-6 text-center text-xs font-mono">Loading...</div>';
+      return renderCounterfactualsHTML(currentDecision.counterfactuals);
+    }
+
+    function renderCounterfactualsHTML(cf) {
+      if (!cf) return '';
+      return `
+        <div class="terminal-card p-5 bg-[#0a0f18] border-[#182338] space-y-5 font-mono text-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#162133] pb-3">
+            <span class="uppercase tracking-wider text-slate-200 font-bold">"WHAT WOULD CHANGE MY MIND?" // COUNTERFACTUAL ENGINE</span>
+            <div class="text-[11px] text-slate-400 space-x-3">
+              <span>Stop Loss: <strong class="text-rose-400">$${cf.stop_loss_level.toFixed(2)}</strong></span>
+              <span>Take Profit: <strong class="text-emerald-400">$${cf.take_profit_level.toFixed(2)}</strong></span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="p-3.5 rounded bg-[#0d1522] border border-[#1b2a42] space-y-1.5">
+              <div class="flex justify-between"><strong class="text-emerald-400">${cf.base_case.name}</strong><span>${cf.base_case.probability_pct}% prob</span></div>
+              <div class="text-lg font-bold text-white">$${cf.base_case.price_target.toFixed(2)}</div>
+              <div class="text-[11px] text-slate-400">Return: +${cf.base_case.expected_return_pct}% | Impact: +${cf.base_case.portfolio_impact_pct}%</div>
+            </div>
+            <div class="p-3.5 rounded bg-[#171118] border border-[#381e28] space-y-1.5">
+              <div class="flex justify-between"><strong class="text-amber-400">${cf.adverse_case.name}</strong><span>${cf.adverse_case.probability_pct}% prob</span></div>
+              <div class="text-lg font-bold text-white">$${cf.adverse_case.price_target.toFixed(2)}</div>
+              <div class="text-[11px] text-rose-400">Return: ${cf.adverse_case.expected_return_pct}% | Impact: ${cf.adverse_case.portfolio_impact_pct}%</div>
+            </div>
+            <div class="p-3.5 rounded bg-[#190d12] border border-[#441a24] space-y-1.5">
+              <div class="flex justify-between"><strong class="text-rose-400">${cf.severe_case.name}</strong><span>${cf.severe_case.probability_pct}% prob</span></div>
+              <div class="text-lg font-bold text-white">$${cf.severe_case.price_target.toFixed(2)}</div>
+              <div class="text-[11px] text-rose-400">Return: ${cf.severe_case.expected_return_pct}% | Impact: ${cf.severe_case.portfolio_impact_pct}%</div>
+            </div>
+          </div>
+
+          <div class="p-4 rounded bg-[#101420] border border-[#1c273c] space-y-2">
+            <div class="font-bold text-slate-200">PRE-DEFINED INVALIDATION TRIGGERS (EXIT / ABSTAIN RULESET):</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px]">
+              ${cf.invalidation_conditions.map((c, i) => `
+                <div class="p-2 rounded bg-[#0b0e16] border border-[#162030] text-slate-300">
+                  <span class="text-amber-400 font-bold">#${i + 1}</span> ${c}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Render 4: AI Debate
+    function renderDebateView() {
+      if (!currentDecision) return '<div class="terminal-card p-6 text-center text-xs font-mono">Loading...</div>';
+      const c = currentDecision.council;
+      const conf = currentDecision.conflict;
+      return `
+        <div class="terminal-card p-6 bg-[#0a0f18] border-[#182338] space-y-6 font-mono text-xs">
+          <div class="flex justify-between border-b border-[#162133] pb-3">
+            <span class="uppercase tracking-wider text-slate-100 font-bold">MODEL COUNCIL DEBATE & DISAGREEMENT MATRIX</span>
+            <span>Conflict: <strong class="text-amber-400">${conf.conflict_severity}</strong> | Entropy: <strong class="text-purple-400">${(conf.entropy_score * 100).toFixed(0)}%</strong></span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+            ${c.votes.map(v => `
+              <div class="p-3.5 rounded bg-[#0e1422] border border-[#19243a] space-y-2">
+                <div class="text-[10px] text-slate-400">${v.model_name}</div>
+                <div class="flex justify-between items-center">
+                  <span class="px-2 py-0.5 rounded font-bold text-white bg-blue-600/20 border border-blue-500/30">${v.signal}</span>
+                  <span class="text-slate-400">${(v.conviction * 100).toFixed(0)}%</span>
+                </div>
+                <p class="text-[10px] text-slate-300 pt-1 border-t border-slate-800">${v.primary_rationale}</p>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="p-4 rounded bg-[#0f1524] border border-[#1d2942] space-y-2">
+            <div class="font-bold text-slate-200">EVIDENCE CONFLICT ATTRIBUTION:</div>
+            <p class="text-slate-300 leading-relaxed">${conf.conflict_explanation}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // Render 5: Market Brain Graph
+    function renderMarketBrain() {
+      if (!currentDecision) return '<div class="terminal-card p-6 text-center text-xs font-mono">Loading...</div>';
+      const d = currentDecision;
+      return `
+        <div class="terminal-card p-6 bg-[#090d16] border-[#18233a] space-y-6 font-mono text-xs">
+          <div class="flex justify-between border-b border-[#162133] pb-3">
+            <span class="uppercase tracking-wider text-slate-200 font-bold">MARKET BRAIN // EVIDENCE PROPAGATION GRAPH</span>
+            <span class="text-slate-400">Traceable Financial Pipeline</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-7 gap-2 items-center text-center">
+            <div class="p-3 rounded bg-[#0f1626] border border-[#1d2a45] space-y-1">
+              <div class="text-[10px] text-slate-400">1. TICK</div>
+              <div class="font-bold text-white">${d.symbol}</div>
+              <div class="text-[10px] text-slate-400">$${d.current_price.toFixed(2)}</div>
+            </div>
+            <div class="p-3 rounded bg-[#0f1626] border border-[#1d2a45] space-y-1">
+              <div class="text-[10px] text-slate-400">2. REGIME</div>
+              <div class="font-bold text-purple-300 truncate">${d.market_regime}</div>
+              <div class="text-[10px] text-slate-400">${(d.regime_confidence * 100).toFixed(0)}% Conf</div>
+            </div>
+            <div class="p-3 rounded bg-[#0f1626] border border-[#1d2a45] space-y-1">
+              <div class="text-[10px] text-slate-400">3. QUANT</div>
+              <div class="font-bold text-emerald-300">${d.council.votes[0]?.signal || 'BUY'}</div>
+              <div class="text-[10px] text-slate-400">Features</div>
+            </div>
+            <div class="p-3 rounded bg-[#0f1626] border border-[#1d2a45] space-y-1">
+              <div class="text-[10px] text-slate-400">4. NEWS</div>
+              <div class="font-bold text-purple-300">${d.council.votes[4]?.signal || 'HOLD'}</div>
+              <div class="text-[10px] text-slate-400">Materiality</div>
+            </div>
+            <div class="p-3 rounded bg-[#0f1626] border border-[#1d2a45] space-y-1">
+              <div class="text-[10px] text-slate-400">5. CONFLICT</div>
+              <div class="font-bold text-amber-300">${d.conflict.conflict_severity}</div>
+              <div class="text-[10px] text-slate-400">Entropy</div>
+            </div>
+            <div class="p-3 rounded bg-[#0f1626] border border-[#1d2a45] space-y-1">
+              <div class="text-[10px] text-slate-400">6. DECISION</div>
+              <div class="font-bold text-white">${d.final_decision}</div>
+              <div class="text-[10px] text-blue-400">${(d.calibrated_confidence * 100).toFixed(0)}% Conf</div>
+            </div>
+            <div class="p-3 rounded bg-[#0f1626] border border-[#1d2a45] space-y-1">
+              <div class="text-[10px] text-slate-400">7. GUARDIAN</div>
+              <div class="font-bold text-emerald-400">${d.risk_guardian.decision}</div>
+              <div class="text-[10px] text-slate-400">${d.approved_position_pct}% Alloc</div>
+            </div>
+          </div>
+
+          <div class="p-4 rounded bg-[#0c121d] border border-[#1b263b] text-slate-200">
+            <strong>Pipeline Synthesis:</strong> ${d.explanation.summary}
+          </div>
+        </div>
+      `;
+    }
+
+    // Render 6: Regime Timeline
+    async function renderRegimeTimelineView() {
+      const container = document.getElementById('view-container');
+      container.innerHTML = '<div class="terminal-card p-6 text-center text-xs font-mono">Loading Regime Timeline...</div>';
+      try {
+        const res = await fetch(`/api/v1/regime/timeline?symbol=${currentSymbol}`);
+        const data = await res.json();
+        container.innerHTML = `
+          <div class="terminal-card p-6 bg-[#0a0f18] border-[#182338] space-y-6 font-mono text-xs">
+            <div class="flex justify-between border-b border-[#162133] pb-3">
+              <span class="uppercase tracking-wider text-slate-200 font-bold">HISTORICAL REGIME TIMELINE // ${currentSymbol}</span>
+              <span>Current: <strong class="text-purple-400">${data.current_regime}</strong></span>
+            </div>
+            <div class="flex w-full h-10 rounded bg-[#070a10] border border-[#141d2d] overflow-hidden p-0.5 space-x-0.5">
+              ${data.timeline.map((pt, i) => `
+                <div class="flex-1 h-full ${pt.regime.includes('BULL') ? 'bg-emerald-500' : pt.regime.includes('BEAR') ? 'bg-rose-500' : pt.regime.includes('VOL') ? 'bg-purple-500' : 'bg-amber-500'}" title="${pt.timestamp}: ${pt.regime} ($${pt.close_price})"></div>
+              `).join('')}
+            </div>
+            <div class="flex justify-between text-[11px] text-slate-400">
+              <span>${data.timeline[0]?.timestamp || ''}</span>
+              <span>Timeline Blocks</span>
+              <span>${data.timeline[data.timeline.length - 1]?.timestamp || ''}</span>
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        container.innerHTML = '<div class="terminal-card p-6 text-center text-xs font-mono text-rose-400">Failed to load regime timeline.</div>';
+      }
+    }
+
+    // Render 7: Portfolio & Risk Guardian
+    function renderPortfolioView() {
+      if (!currentPortfolio) return '<div class="terminal-card p-6 text-center text-xs font-mono">Loading Portfolio...</div>';
+      const p = currentPortfolio;
+      return `
+        <div class="space-y-6 font-mono text-xs">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="terminal-card p-4 bg-[#0a0f18] border-[#182338]">
+              <div class="text-[10px] text-slate-400 uppercase">Total Equity</div>
+              <div class="text-xl font-bold text-white mt-1">$${p.total_equity.toLocaleString()}</div>
+              <div class="text-[10px] text-slate-400 mt-1">Cash: $${p.cash.toLocaleString()}</div>
+            </div>
+            <div class="terminal-card p-4 bg-[#0a0f18] border-[#182338]">
+              <div class="text-[10px] text-slate-400 uppercase">Volatility</div>
+              <div class="text-xl font-bold text-purple-400 mt-1">${p.portfolio_volatility_annualized}%</div>
+              <div class="text-[10px] text-slate-400 mt-1">CVaR 95%: ${p.portfolio_cvar_95}%</div>
+            </div>
+            <div class="terminal-card p-4 bg-[#0a0f18] border-[#182338]">
+              <div class="text-[10px] text-slate-400 uppercase">Concentration (HHI)</div>
+              <div class="text-xl font-bold text-amber-400 mt-1">${p.hhi_concentration_index}</div>
+              <div class="text-[10px] text-slate-400 mt-1">Top 3: ${p.top_3_concentration_pct}%</div>
+            </div>
+            <div class="terminal-card p-4 bg-[#0a0f18] border-[#182338]">
+              <div class="text-[10px] text-slate-400 uppercase">Current Drawdown</div>
+              <div class="text-xl font-bold text-rose-400 mt-1">${p.current_drawdown_pct}%</div>
+              <div class="text-[10px] text-slate-400 mt-1">Peak: $${p.peak_equity.toLocaleString()}</div>
+            </div>
+          </div>
+
+          <div class="terminal-card p-5 bg-[#0a0f18] border-[#182338] space-y-4">
+            <div class="flex justify-between border-b border-[#162133] pb-3">
+              <span class="uppercase tracking-wider text-slate-200 font-bold">PORTFOLIO HOLDINGS</span>
+              <span class="text-slate-400">${p.positions.length} Positions</span>
+            </div>
+            <table class="w-full text-left">
+              <thead><tr class="border-b border-slate-800 text-[10px] uppercase text-slate-400"><th class="pb-2">Asset</th><th class="pb-2">Sector</th><th class="pb-2">Shares</th><th class="pb-2">Price</th><th class="pb-2">Value</th><th class="pb-2 text-right">PnL</th></tr></thead>
+              <tbody class="divide-y divide-slate-800/40">
+                ${p.positions.map(pos => `
+                  <tr>
+                    <td class="py-2 font-bold text-white">${pos.symbol}</td>
+                    <td class="py-2 text-slate-400">${pos.sector}</td>
+                    <td class="py-2 text-slate-300">${pos.shares}</td>
+                    <td class="py-2 text-slate-300">$${pos.current_price.toFixed(2)}</td>
+                    <td class="py-2 text-blue-400">$${pos.market_value.toLocaleString()}</td>
+                    <td class="py-2 text-right font-medium ${pos.unrealized_pnl_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${pos.unrealized_pnl_pct >= 0 ? '+' : ''}${pos.unrealized_pnl_pct.toFixed(2)}%</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // Render 8: Decision Replay
+    async function renderDecisionReplayView() {
+      const container = document.getElementById('view-container');
+      container.innerHTML = '<div class="terminal-card p-6 text-center text-xs font-mono">Loading Decision Replay...</div>';
+      try {
+        const mems = await (await fetch('/api/v1/memory')).json();
+        const replay = await (await fetch(`/api/v1/memory/replay/${mems[0].id}`)).json();
+        container.innerHTML = `
+          <div class="terminal-card p-6 bg-[#0a0f18] border-[#182338] space-y-6 font-mono text-xs">
+            <div class="flex justify-between border-b border-[#162133] pb-3">
+              <span class="uppercase tracking-wider text-slate-200 font-bold">DECISION REPLAY (TIME-TRAVEL) // ${replay.symbol}</span>
+              <span class="text-blue-400">${replay.decision_timestamp}</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="p-4 rounded bg-[#0d1422] border border-[#1b283f] space-y-2">
+                <div class="font-bold text-blue-400 uppercase">1. WHAT AI KNEW THEN</div>
+                <div class="text-[11px] text-slate-300 space-y-1">
+                  <div>Regime: <strong class="text-purple-400">${replay.what_ai_knew_then.market_regime}</strong></div>
+                  <div>Calibrated Conf: <strong>${(replay.what_ai_knew_then.calibrated_confidence * 100).toFixed(0)}%</strong></div>
+                  <div>Risk Guardian: <strong>${replay.what_ai_knew_then.risk_guardian_evaluation}</strong></div>
+                  <div>Context: ${replay.what_ai_knew_then.dominant_evidence}</div>
+                </div>
+              </div>
+
+              <div class="p-4 rounded bg-[#0d1422] border border-[#1b283f] space-y-2">
+                <div class="font-bold text-emerald-400 uppercase">2. WHAT AI DECIDED & WHY</div>
+                <div class="text-lg font-black text-white">${replay.what_ai_decided}</div>
+                <p class="text-[11px] text-slate-300">${replay.why}</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="p-4 rounded bg-[#0f1624] border border-[#1d2b45] space-y-2">
+                <div class="font-bold text-purple-400 uppercase">3. WHAT HAPPENED (OUTCOME)</div>
+                <div class="text-sm font-bold text-emerald-400">Subsequent Return: ${replay.what_happened.subsequent_return_pct > 0 ? '+' : ''}${replay.what_happened.subsequent_return_pct}%</div>
+                <div class="text-sm font-bold text-rose-400">Subsequent Drawdown: ${replay.what_happened.subsequent_drawdown_pct}%</div>
+              </div>
+
+              <div class="p-4 rounded bg-[#0f1624] border border-[#1d2b45] space-y-2">
+                <div class="font-bold text-amber-400 uppercase">4. PROCESS VS LUCK</div>
+                <div class="text-xs font-bold text-white">${replay.was_the_decision_good.classification}</div>
+                <p class="text-[11px] text-slate-300">${replay.was_the_decision_good.process_vs_luck_analysis}</p>
+              </div>
+            </div>
+
+            <div class="p-4 rounded bg-[#121a2a] border border-[#233350] space-y-1">
+              <div class="font-bold text-blue-400 uppercase">5. VALIDATED LEARNING:</div>
+              <p class="text-slate-200 text-xs">${replay.what_did_ai_learn.validated_lesson}</p>
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        container.innerHTML = '<div class="terminal-card p-6 text-center text-xs font-mono text-rose-400">Failed to load replay.</div>';
+      }
+    }
+
+    // Render 9: Backtesting Lab
+    async function renderBacktestView() {
+      const container = document.getElementById('view-container');
+      container.innerHTML = `
+        <div class="terminal-card p-6 bg-[#0a0f18] border-[#182338] space-y-6 font-mono text-xs">
+          <div class="flex justify-between border-b border-[#162133] pb-3">
+            <span class="uppercase tracking-wider text-slate-100 font-bold">BACKTEST STRATEGY LAB (WALK-FORWARD)</span>
+            <span class="text-slate-400">10 BPS Friction + 5 BPS Slippage</span>
+          </div>
+          <button onclick="runBacktestLab()" class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 font-bold text-white text-xs">
+            EXECUTE 1-YEAR BACKTEST (SPY)
+          </button>
+          <div id="backtest-output" class="text-slate-400 text-xs">Click above to execute controlled backtest.</div>
+        </div>
+      `;
+    }
+
+    async function runBacktestLab() {
+      const out = document.getElementById('backtest-output');
+      out.innerHTML = '<div class="animate-pulse">Running simulation...</div>';
+      try {
+        const res = await (await fetch('/api/v1/backtest', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({symbol: 'SPY', strategy: 'full_adaptive', initial_capital: 100000})
+        })).json();
+
+        out.innerHTML = `
+          <div class="space-y-4 pt-4 border-t border-slate-800">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div class="p-3 rounded bg-[#0d1422]"><div class="text-[10px] text-slate-400">Final Equity</div><div class="text-base font-bold text-emerald-400">$${res.final_equity.toLocaleString()}</div></div>
+              <div class="p-3 rounded bg-[#0d1422]"><div class="text-[10px] text-slate-400">Sharpe Ratio</div><div class="text-base font-bold text-blue-400">${res.sharpe_ratio}</div></div>
+              <div class="p-3 rounded bg-[#0d1422]"><div class="text-[10px] text-slate-400">Max Drawdown</div><div class="text-base font-bold text-rose-400">${res.max_drawdown_pct}%</div></div>
+              <div class="p-3 rounded bg-[#0d1422]"><div class="text-[10px] text-slate-400">Abstentions</div><div class="text-base font-bold text-amber-400">${res.abstentions_count} trades</div></div>
+            </div>
+            <div class="text-[11px] text-slate-300">In-Sample Sharpe: ${res.in_sample_sharpe} | Out-of-Sample Sharpe: ${res.out_of_sample_sharpe}</div>
+          </div>
+        `;
+      } catch (e) {
+        out.innerHTML = '<div class="text-rose-400">Backtest failed.</div>';
+      }
+    }
+
+    // Render 10: Ablation & Benchmarks
+    async function renderExperimentsView() {
+      const container = document.getElementById('view-container');
+      container.innerHTML = '<div class="terminal-card p-6 text-center text-xs font-mono">Loading Ablation Suite...</div>';
+      try {
+        const report = await (await fetch('/api/v1/experiments/suite?symbol=SPY')).json();
+        container.innerHTML = `
+          <div class="terminal-card p-6 bg-[#0a0f18] border-[#182338] space-y-6 font-mono text-xs">
+            <div class="flex justify-between border-b border-[#162133] pb-3">
+              <span class="uppercase tracking-wider text-slate-100 font-bold">RESEARCH EXPERIMENTS: BASELINES & ABLATION STUDY</span>
+              <span class="text-slate-400">Standardized Seed 42</span>
+            </div>
+
+            <div class="p-4 rounded bg-[#101726] border border-[#1f2e4a] text-slate-200">
+              <strong>Primary Research Finding:</strong> ${report.research_conclusion}
+            </div>
+
+            <div class="space-y-2">
+              <div class="font-bold text-white uppercase">ABLATION STUDY (A THROUGH H)</div>
+              <table class="w-full text-left text-[11px]">
+                <thead><tr class="border-b border-slate-800 text-[10px] text-slate-400 uppercase"><th class="pb-2">Step</th><th class="pb-2">Sharpe</th><th class="pb-2">Return</th><th class="pb-2">Max DD</th><th class="pb-2">Marginal Insight</th></tr></thead>
+                <tbody class="divide-y divide-slate-800/40">
+                  ${report.ablations.map((a, i) => `
+                    <tr class="${i === 7 ? 'text-white font-bold bg-emerald-500/10' : 'text-slate-300'}">
+                      <td class="py-2">${a.name}</td>
+                      <td class="py-2 text-emerald-400 font-bold">${a.sharpe_ratio}</td>
+                      <td class="py-2 text-blue-400">${a.annualized_return_pct}%</td>
+                      <td class="py-2 text-rose-400">${a.max_drawdown_pct}%</td>
+                      <td class="py-2 text-slate-400 text-[10px]">${a.marginal_contribution_note}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        container.innerHTML = '<div class="terminal-card p-6 text-center text-xs font-mono text-rose-400">Failed to load experiments.</div>';
+      }
+    }
+
+    // Render 11: Memory
+    async function renderMemoryView() {
+      const container = document.getElementById('view-container');
+      container.innerHTML = '<div class="terminal-card p-6 text-center text-xs font-mono">Loading Contextual Memory...</div>';
+      try {
+        const mems = await (await fetch('/api/v1/memory')).json();
+        container.innerHTML = `
+          <div class="terminal-card p-6 bg-[#0a0f18] border-[#182338] space-y-4 font-mono text-xs">
+            <div class="flex justify-between border-b border-[#162133] pb-3">
+              <span class="uppercase tracking-wider text-slate-100 font-bold">CONTEXTUAL DECISION MEMORY & SELF-CORRECTION LOGS</span>
+              <span class="text-slate-400">${mems.length} Indexed Memories</span>
+            </div>
+            <div class="space-y-3">
+              ${mems.map(m => `
+                <div class="p-3.5 rounded bg-[#0c121e] border border-[#182338] space-y-1.5">
+                  <div class="flex justify-between">
+                    <div><strong class="text-white">${m.symbol}</strong> <span class="text-blue-400 font-bold ml-1">[${m.decision}]</span> <span class="text-purple-400 ml-1">(${m.regime})</span></div>
+                    <span class="text-[10px] px-2 py-0.5 rounded border border-blue-500/30 text-blue-300">${m.decision_quality_label}</span>
+                  </div>
+                  <p class="text-slate-300 text-[11px]">${m.dominant_evidence}</p>
+                  <div class="text-[11px] text-amber-300 pt-1 border-t border-slate-800">Validated Lesson: ${m.validated_lesson || 'Standard tracking.'}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        container.innerHTML = '<div class="terminal-card p-6 text-center text-xs font-mono text-rose-400">Failed to load memory.</div>';
+      }
+    }
+
+    // Render 12: System Health
+    async function renderSystemHealthView() {
+      const container = document.getElementById('view-container');
+      container.innerHTML = '<div class="terminal-card p-6 text-center text-xs font-mono">Loading Health Telemetry...</div>';
+      try {
+        const h = await (await fetch('/api/v1/system/health')).json();
+        container.innerHTML = `
+          <div class="terminal-card p-6 bg-[#0a0f18] border-[#182338] space-y-6 font-mono text-xs">
+            <div class="flex justify-between border-b border-[#162133] pb-3">
+              <span class="uppercase tracking-wider text-slate-100 font-bold">SYSTEM HEALTH & OBSERVABILITY STATUS</span>
+              <span class="text-emerald-400 font-bold">ONLINE (0 FAULTS)</span>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              ${Object.entries(h.services).map(([name, data]) => `
+                <div class="p-3 rounded bg-[#0d1422] border border-[#1a253a]">
+                  <div class="text-[10px] text-slate-400 uppercase">${name.replace(/_/g, ' ')}</div>
+                  <div class="text-sm font-bold text-emerald-400 mt-1">${data.status}</div>
+                </div>
+              `).join('')}
+            </div>
+            <div class="p-4 rounded bg-[#0e1626] border border-[#1e2e4a] space-y-1">
+              <div class="font-bold text-white uppercase text-[11px]">Model Versions:</div>
+              ${Object.entries(h.model_versions).map(([k, v]) => `
+                <div class="flex justify-between text-slate-300 py-0.5 border-b border-slate-800/40"><span>${k}:</span><span class="text-blue-400 font-bold">${v}</span></div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        container.innerHTML = '<div class="terminal-card p-6 text-center text-xs font-mono text-rose-400">Failed to load health.</div>';
+      }
+    }
+
+    // Auto-boot on load
+    window.addEventListener('DOMContentLoaded', () => {
+      syncAll();
+    });
+  </script>
+</body>
+</html>
