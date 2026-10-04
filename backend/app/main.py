@@ -3,8 +3,8 @@ FastAPI Main Application Entry Point.
 Adaptive AI Trading Decision-Support System Backend API.
 """
 from pathlib import Path
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
 from .core.logging import get_logger
@@ -85,6 +85,20 @@ def project_document():
     return HTMLResponse(
         content="<h1>Adaptive AI Trading Decision-Support System</h1><p>Project documentation template not found.</p>"
     )
+
+
+ZIP_PATH = Path("C:/Users/Rakshitha T R/.gemini/antigravity/scratch/adaptive-trading-system.zip")
+
+
+@app.get("/download/project-zip")
+def download_project_zip():
+    if ZIP_PATH.exists():
+        return FileResponse(
+            path=str(ZIP_PATH),
+            filename="adaptive-trading-system.zip",
+            media_type="application/zip",
+        )
+    raise HTTPException(status_code=404, detail="Project zip archive not found.")
 
 
 @app.get("/api/status")
