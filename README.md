@@ -1,10 +1,12 @@
-# Adaptive AI Trading Decision-Support System
-> **A Production-Grade, Research-Defensible, Uncertainty-Aware Financial Intelligence Platform**
+# TRADEX — Adaptive AI Trading Decision-Support System
+> **Professional Trading Terminal + AI Trading Intelligence Platform**
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ammurakshitha954-droid/tradex)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/ammurakshitha954-droid/tradex)
 
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.121-emerald.svg)](https://fastapi.tiangolo.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-14.2-black.svg)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)](https://www.typescriptlang.org/)
+[![TradingView](https://img.shields.io/badge/Charts-TradingView%20Lightweight-brightgreen.svg)](https://tradingview.github.io/lightweight-charts/)
 [![Tests](https://img.shields.io/badge/Tests-100%25%20Passing-success.svg)]()
 [![License](https://img.shields.io/badge/License-Proprietary%20%2F%20Research-purple.svg)]()
 
