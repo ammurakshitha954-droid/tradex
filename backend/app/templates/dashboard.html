@@ -285,9 +285,19 @@
           <span class="w-2 h-2 rounded-full bg-[#00c076] animate-pulse"></span>
           <span class="font-bold text-white tracking-wider text-xs">TRADEX AI INTELLIGENCE</span>
         </div>
-        <button onclick="runAIDecision()" class="px-2 py-0.5 rounded bg-[#182336] hover:bg-[#202f48] text-[#00c076] text-[10px] transition font-bold">
-          Analyze
+        <button onclick="runAIDecision()" class="px-2 py-0.5 rounded bg-[#182336] hover:bg-[#202f48] text-[#00c076] text-[10px] transition font-bold" title="Recompute AI Multi-Council Decision">
+          ⚡ Analyze
         </button>
+      </div>
+
+      <!-- Selected Target Strip -->
+      <div class="px-3.5 py-2 bg-[#0c111a] border-b border-[#182130] flex justify-between items-center text-[11px]">
+        <div class="flex items-center space-x-1.5">
+          <span class="text-slate-400">Active Asset:</span>
+          <span class="font-bold text-white text-xs" id="ai-target-symbol">NVDA</span>
+          <span class="text-[9px] px-1 rounded bg-[#162030] text-slate-300" id="ai-target-exchange">NASDAQ</span>
+        </div>
+        <div class="font-bold text-slate-200" id="ai-target-price">$124.50</div>
       </div>
 
       <!-- Main Decision Card -->
@@ -786,14 +796,23 @@
       TradeX.selectedExchange = exchange;
       TradeX.selectedPrice = price;
 
-      document.getElementById('chart-symbol').innerText = symbol;
-      document.getElementById('chart-exchange').innerText = exchange;
-      document.getElementById('chart-ltp').innerText = `$${price.toFixed(2)}`;
+      const chartSym = document.getElementById('chart-symbol');
+      if (chartSym) chartSym.innerText = symbol;
+      const chartExch = document.getElementById('chart-exchange');
+      if (chartExch) chartExch.innerText = exchange;
+      const chartLtp = document.getElementById('chart-ltp');
+      if (chartLtp) chartLtp.innerText = `$${price.toFixed(2)}`;
       
       const changeEl = document.getElementById('chart-change');
-      const isUp = pct >= 0;
-      changeEl.innerText = `${isUp ? '+' : ''}$${change.toFixed(2)} (${isUp ? '+' : ''}${pct.toFixed(2)}%)`;
-      changeEl.className = `text-[11px] font-bold ${isUp ? 'text-[#00c076]' : 'text-[#eb455f]'}`;
+      if (changeEl) {
+        const isUp = pct >= 0;
+        changeEl.innerText = `${isUp ? '+' : ''}$${change.toFixed(2)} (${isUp ? '+' : ''}${pct.toFixed(2)}%)`;
+        changeEl.className = `text-[11px] font-bold ${isUp ? 'text-[#00c076]' : 'text-[#eb455f]'}`;
+      }
+
+      if (TradeX.activeView !== 'dashboard') {
+        switchView('dashboard');
+      }
 
       renderWatchlist();
       loadChartData(symbol);
@@ -884,7 +903,7 @@
       if (loader) loader.classList.remove('hidden');
 
       try {
-        const res = await fetch(`/api/v1/assets/${symbol}/chart?days=120&timeframe=1d`);
+        const res = await fetch(`/api/v1/assets/${encodeURIComponent(symbol)}/chart?days=120&timeframe=1d`);
         const data = await res.json();
 
         if (TradeX.candleSeries && data.candles) {
@@ -961,67 +980,146 @@
     // AI Decision Panel Fetcher
     async function runAIDecision(symbol = TradeX.selectedSymbol) {
       try {
-        const res = await fetch(`/api/v1/decisions/latest?symbol=${symbol}`);
+        const targetSym = document.getElementById('ai-target-symbol');
+        if (targetSym) targetSym.innerText = symbol;
+        const targetExch = document.getElementById('ai-target-exchange');
+        if (targetExch) targetExch.innerText = TradeX.selectedExchange || 'NASDAQ';
+        const targetPrice = document.getElementById('ai-target-price');
+        if (targetPrice) targetPrice.innerText = `$${TradeX.selectedPrice.toFixed(2)}`;
+
+        const res = await fetch(`/api/v1/decisions/latest?symbol=${encodeURIComponent(symbol)}`);
+        if (!res.ok) throw new Error(`Decision API error: HTTP ${res.status}`);
         const d = await res.json();
 
         // Update main badge
         const badge = document.getElementById('ai-decision-badge');
-        badge.innerText = d.final_decision;
-        if (d.final_decision === "BUY") badge.className = "text-2xl font-black text-[#00c076] mt-0.5";
-        else if (d.final_decision === "SELL") badge.className = "text-2xl font-black text-[#eb455f] mt-0.5";
-        else if (d.final_decision === "HOLD") badge.className = "text-2xl font-black text-amber-400 mt-0.5";
-        else badge.className = "text-2xl font-black text-slate-400 mt-0.5";
+        if (badge) {
+          badge.innerText = d.final_decision || "HOLD";
+          if (d.final_decision === "BUY") badge.className = "text-2xl font-black text-[#00c076] mt-0.5";
+          else if (d.final_decision === "SELL") badge.className = "text-2xl font-black text-[#eb455f] mt-0.5";
+          else if (d.final_decision === "HOLD") badge.className = "text-2xl font-black text-[#f59e0b] mt-0.5";
+          else badge.className = "text-2xl font-black text-slate-400 mt-0.5";
+        }
 
         // Risk Guardian
         const gBadge = document.getElementById('ai-guardian-badge');
-        gBadge.innerText = `✓ ${d.risk_guardian.decision}`;
-        if (d.risk_guardian.decision === "APPROVE") gBadge.className = "px-2 py-0.5 rounded text-[11px] font-bold badge-approved inline-block mt-0.5";
-        else if (d.risk_guardian.decision === "REDUCE") gBadge.className = "px-2 py-0.5 rounded text-[11px] font-bold badge-reduce inline-block mt-0.5";
-        else gBadge.className = "px-2 py-0.5 rounded text-[11px] font-bold badge-reject inline-block mt-0.5";
+        if (gBadge) {
+          const gDec = (d.risk_guardian && d.risk_guardian.decision) ? d.risk_guardian.decision : "APPROVE";
+          if (gDec === "APPROVE") {
+            gBadge.innerText = "✓ APPROVED";
+            gBadge.className = "px-2 py-0.5 rounded text-[11px] font-bold badge-approved inline-block mt-0.5";
+          } else if (gDec === "REDUCE") {
+            gBadge.innerText = "⚠ REDUCE";
+            gBadge.className = "px-2 py-0.5 rounded text-[11px] font-bold badge-reduce inline-block mt-0.5";
+          } else {
+            gBadge.innerText = "✕ REJECTED";
+            gBadge.className = "px-2 py-0.5 rounded text-[11px] font-bold badge-reject inline-block mt-0.5";
+          }
+        }
 
         // Confidence & Uncertainty
-        document.getElementById('ai-confidence').innerText = `${(d.calibrated_confidence * 100).toFixed(1)}%`;
-        document.getElementById('ai-uncertainty').innerText = `${(d.composite_uncertainty * 100).toFixed(1)}%`;
-        document.getElementById('ai-regime').innerText = d.market_regime;
-        document.getElementById('ai-allocation').innerText = `${d.approved_position_pct}% Portfolio`;
-        document.getElementById('ticker-regime').innerText = `${d.market_regime} (${(d.regime_confidence * 100).toFixed(0)}%)`;
+        const confEl = document.getElementById('ai-confidence');
+        if (confEl) confEl.innerText = `${((d.calibrated_confidence || 0) * 100).toFixed(1)}%`;
+
+        const uncertEl = document.getElementById('ai-uncertainty');
+        if (uncertEl) uncertEl.innerText = `${((d.composite_uncertainty || 0) * 100).toFixed(1)}%`;
+
+        const regimeEl = document.getElementById('ai-regime');
+        if (regimeEl) regimeEl.innerText = d.market_regime || "TRANSITION";
+
+        const allocEl = document.getElementById('ai-allocation');
+        if (allocEl) allocEl.innerText = `${d.approved_position_pct != null ? d.approved_position_pct : 0}% Portfolio`;
+
+        const tickerRegime = document.getElementById('ticker-regime');
+        if (tickerRegime) tickerRegime.innerText = `${d.market_regime || 'TRANSITION'} (${((d.regime_confidence || 0) * 100).toFixed(0)}%)`;
 
         // Council Evidence
-        document.getElementById('ai-agreement').innerText = `Agreement: ${( (1 - d.conflict.disagreement_score) * 100 ).toFixed(0)}%`;
-        document.getElementById('ev-conflict').innerText = `${d.conflict.conflict_severity} (Entropy: ${d.conflict.disagreement_score.toFixed(2)})`;
-        
-        if (d.council && d.council.votes) {
+        if (d.conflict) {
+          const agEl = document.getElementById('ai-agreement');
+          if (agEl) agEl.innerText = `Agreement: ${( (1 - (d.conflict.disagreement_score || 0)) * 100 ).toFixed(0)}%`;
+          const confEl = document.getElementById('ev-conflict');
+          if (confEl) confEl.innerText = `${d.conflict.conflict_severity || 'LOW'} (Entropy: ${(d.conflict.disagreement_score || 0).toFixed(2)})`;
+        }
+
+        if (d.council && Array.isArray(d.council.votes)) {
           const v = d.council.votes;
-          if (v[0]) document.getElementById('ev-tech').innerText = v[0].signal;
-          if (v[4]) document.getElementById('ev-news').innerText = v[4].signal;
-          if (v[3]) document.getElementById('ev-regime').innerText = v[3].signal;
-          if (v[2]) document.getElementById('ev-ml').innerText = v[2].signal;
+          const tech = v.find(x => x.model_name.toLowerCase().includes('technical')) || v[0];
+          const news = v.find(x => x.model_name.toLowerCase().includes('news')) || v[4] || v[v.length - 1];
+          const regime = v.find(x => x.model_name.toLowerCase().includes('regime')) || v[3];
+          const ml = v.find(x => x.model_name.toLowerCase().includes('ml') || x.model_name.toLowerCase().includes('random forest')) || v[2];
+
+          function renderVote(elId, vote) {
+            const el = document.getElementById(elId);
+            if (!el || !vote) return;
+            el.innerText = vote.signal;
+            if (vote.signal === 'BUY') el.className = 'font-bold text-[#00c076]';
+            else if (vote.signal === 'SELL') el.className = 'font-bold text-[#eb455f]';
+            else if (vote.signal === 'HOLD') el.className = 'font-bold text-[#f59e0b]';
+            else el.className = 'font-bold text-slate-400';
+          }
+
+          renderVote('ev-tech', tech);
+          renderVote('ev-news', news);
+          renderVote('ev-regime', regime);
+          renderVote('ev-ml', ml);
         }
 
         // Multi-Horizon
         if (d.horizons) {
-          document.getElementById('hz-short').innerText = `${d.horizons.short_term.signal} (${(d.horizons.short_term.confidence * 100).toFixed(0)}%)`;
-          document.getElementById('hz-med').innerText = `${d.horizons.medium_term.signal} (${(d.horizons.medium_term.confidence * 100).toFixed(0)}%)`;
-          document.getElementById('hz-long').innerText = `${d.horizons.long_term.signal} (${(d.horizons.long_term.confidence * 100).toFixed(0)}%)`;
+          function renderHz(elId, hz) {
+            const el = document.getElementById(elId);
+            if (!el || !hz) return;
+            const conf = Math.round((hz.confidence || 0) * 100);
+            el.innerText = `${hz.signal} (${conf}%)`;
+            if (hz.signal === 'BUY') el.className = 'font-bold text-[#00c076]';
+            else if (hz.signal === 'SELL') el.className = 'font-bold text-[#eb455f]';
+            else if (hz.signal === 'HOLD') el.className = 'font-bold text-[#f59e0b]';
+            else el.className = 'font-bold text-slate-400';
+          }
+          renderHz('hz-short', d.horizons.short_term);
+          renderHz('hz-med', d.horizons.medium_term);
+          renderHz('hz-long', d.horizons.long_term);
         }
 
         // Why Text
         const whyContainer = document.getElementById('ai-why-text');
-        if (d.explanation && d.explanation.supporting_evidence) {
-          whyContainer.innerHTML = d.explanation.supporting_evidence.map(e => `<p>• ${e}</p>`).join('');
+        if (whyContainer && d.explanation) {
+          const points = d.explanation.why_this_decision || d.explanation.supporting_evidence || [d.explanation.summary || "Indicators in statistical equilibrium without directional bias."];
+          whyContainer.innerHTML = points.map(e => `
+            <p class="flex items-start space-x-1.5 py-0.5">
+              <span class="text-[#00c076] font-bold">✓</span>
+              <span>${e}</span>
+            </p>
+          `).join('');
         }
 
         // Why Not Text
         const whyNotContainer = document.getElementById('ai-why-not-text');
-        if (d.explanation) {
+        if (whyNotContainer && d.explanation) {
+          let whyNotPoints = [];
+          if (Array.isArray(d.explanation.why_not)) {
+            whyNotPoints = d.explanation.why_not;
+          } else if (typeof d.explanation.why_not === 'string') {
+            whyNotPoints = [d.explanation.why_not];
+          } else {
+            whyNotPoints = [d.explanation.why_not_buy || d.explanation.why_not_sell || "Risk profile mandates capital preservation."];
+          }
+
+          let invalConditions = ["Daily close breach of dynamic risk boundary."];
+          if (d.counterfactuals && Array.isArray(d.counterfactuals.invalidation_conditions)) {
+            invalConditions = d.counterfactuals.invalidation_conditions;
+          } else if (d.counterfactuals && Array.isArray(d.counterfactuals.invalidation_triggers)) {
+            invalConditions = d.counterfactuals.invalidation_triggers;
+          }
+
           whyNotContainer.innerHTML = `
             <div class="p-2 rounded bg-[#0f1522] border border-[#172233]">
               <strong class="text-rose-400">Why not alternative action?</strong>
-              <p class="text-slate-400 mt-0.5 text-[10px]">${d.explanation.why_not_buy || d.explanation.why_not_sell || "Risk/reward trade-off bounded by trailing ATR."}</p>
+              <p class="text-slate-400 mt-0.5 text-[10px]">${whyNotPoints[0] || "Downside variance exceeds hurdle rate."}</p>
             </div>
             <div class="p-2 rounded bg-[#0f1522] border border-[#172233]">
               <strong class="text-slate-300">Thesis Invalidation:</strong>
-              <p class="text-slate-400 mt-0.5 text-[10px]">${d.counterfactuals.invalidation_triggers[0] || "Daily close below 20 EMA."}</p>
+              <p class="text-slate-400 mt-0.5 text-[10px]">${invalConditions[0] || "Daily close below 20 EMA."}</p>
             </div>
           `;
         }
@@ -1430,7 +1528,8 @@
 
       if (view === "debate") {
         try {
-          const res = await fetch(`/api/v1/decisions/debate?symbol=${TradeX.selectedSymbol}`);
+          const res = await fetch(`/api/v1/decisions/debate?symbol=${encodeURIComponent(TradeX.selectedSymbol)}`);
+          if (!res.ok) throw new Error(`Debate API HTTP ${res.status}`);
           const d = await res.json();
           container.innerHTML = `
             <div class="max-w-5xl mx-auto space-y-6 font-mono text-xs">
@@ -1460,8 +1559,13 @@
         }
       } else if (view === "replay") {
         try {
-          const mems = await (await fetch('/api/v1/memory')).json();
-          const replay = await (await fetch(`/api/v1/memory/replay/${mems[0].id}`)).json();
+          const memsRes = await fetch('/api/v1/memory');
+          if (!memsRes.ok) throw new Error(`Memory API HTTP ${memsRes.status}`);
+          const mems = await memsRes.json();
+          const targetId = (Array.isArray(mems) && mems.length > 0) ? mems[0].id : 'mem-hist-001';
+          const replayRes = await fetch(`/api/v1/memory/replay/${targetId}`);
+          if (!replayRes.ok) throw new Error(`Replay API HTTP ${replayRes.status}`);
+          const replay = await replayRes.json();
           container.innerHTML = `
             <div class="max-w-5xl mx-auto space-y-6 font-mono text-xs">
               <div class="flex justify-between items-center border-b border-slate-800 pb-3">
