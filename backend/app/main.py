@@ -56,17 +56,19 @@ app.include_router(system_router, prefix=api_v1)
 @app.get("/")
 def root(request: Request):
     accept = request.headers.get("accept", "")
-    # If explicitly requested by a browser navigating directly
-    if "text/html" in accept and "application/json" not in accept:
-        if DASHBOARD_PATH.exists():
-            return HTMLResponse(content=DASHBOARD_PATH.read_text(encoding="utf-8"))
-    return {
-        "system": settings.PROJECT_NAME,
-        "status": "OPERATIONAL",
-        "documentation": "/docs",
-        "api_v1": api_v1,
-        "dashboard": "/dashboard",
-    }
+    # If client explicitly requests only JSON (e.g. programmatic API client)
+    if "application/json" in accept and "text/html" not in accept:
+        return {
+            "system": settings.PROJECT_NAME,
+            "status": "OPERATIONAL",
+            "documentation": "/docs",
+            "api_v1": api_v1,
+            "dashboard": "/dashboard",
+        }
+    # For browsers and web clients, serve the TRADEX dashboard directly
+    if DASHBOARD_PATH.exists():
+        return HTMLResponse(content=DASHBOARD_PATH.read_text(encoding="utf-8"))
+    return HTMLResponse(content="<h1>TradeX Dashboard Loading...</h1>")
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
