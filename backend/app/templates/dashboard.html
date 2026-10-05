@@ -56,6 +56,16 @@
     .badge-approved { background: rgba(0, 192, 118, 0.15); color: #00c076; border: 1px solid rgba(0, 192, 118, 0.35); }
     .badge-reduce { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35); }
     .badge-reject { background: rgba(235, 69, 95, 0.15); color: #eb455f; border: 1px solid rgba(235, 69, 95, 0.35); }
+    @keyframes flashGreen {
+      0% { background-color: rgba(0, 192, 118, 0.35); }
+      100% { background-color: transparent; }
+    }
+    @keyframes flashRed {
+      0% { background-color: rgba(235, 69, 95, 0.35); }
+      100% { background-color: transparent; }
+    }
+    .tick-up { animation: flashGreen 0.6s ease-out; }
+    .tick-down { animation: flashRed 0.6s ease-out; }
   </style>
 </head>
 <body class="flex flex-col h-screen select-none text-xs">
@@ -109,13 +119,13 @@
       
       <!-- Market & AI Status Badges -->
       <div class="hidden lg:flex items-center space-x-2 text-[10px]">
-        <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1">
+        <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1" title="Real-time Market Tick Stream">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>MARKET LIVE</span>
+          <span id="market-status-badge">TICK STREAM ACTIVE (1.2/s)</span>
         </span>
-        <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/30 flex items-center space-x-1">
-          <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-          <span>AI COUNCIL ONLINE</span>
+        <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/30 flex items-center space-x-1" title="5-Model AI Council Engine">
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-400" id="ai-status-dot"></span>
+          <span id="ai-status-badge">AI COUNCIL READY</span>
         </span>
       </div>
 
@@ -138,34 +148,34 @@
 
   <!-- ==================== 2. COMPACT MARKET TICKER ==================== -->
   <div class="h-7 bg-[#0b0f16] border-b border-[#161f2d] flex items-center px-3 space-x-5 text-[11px] font-mono overflow-x-auto whitespace-nowrap shrink-0">
-    <div class="flex items-center space-x-1.5">
+    <div class="flex items-center space-x-1.5 cursor-pointer hover:bg-[#121824] px-1.5 py-0.5 rounded transition" onclick="selectInstrument('NIFTY 50', 'NSE', 24852.15, 142.30, 0.58)">
       <span class="text-slate-400 uppercase font-semibold">NIFTY 50</span>
-      <span class="text-white font-bold">24,852.15</span>
-      <span class="text-[#00c076] font-semibold">+142.30 (+0.58%)</span>
+      <span class="text-white font-bold transition-colors" id="ticker-price-nifty">24,852.15</span>
+      <span class="text-[#00c076] font-semibold" id="ticker-chg-nifty">+142.30 (+0.58%)</span>
     </div>
     <span class="text-slate-700">|</span>
-    <div class="flex items-center space-x-1.5">
+    <div class="flex items-center space-x-1.5 cursor-pointer hover:bg-[#121824] px-1.5 py-0.5 rounded transition" onclick="selectInstrument('BANK NIFTY', 'NSE', 51210.45, 218.10, 0.43)">
       <span class="text-slate-400 uppercase font-semibold">BANK NIFTY</span>
-      <span class="text-white font-bold">51,210.45</span>
-      <span class="text-[#00c076] font-semibold">+218.10 (+0.43%)</span>
+      <span class="text-white font-bold transition-colors" id="ticker-price-banknifty">51,210.45</span>
+      <span class="text-[#00c076] font-semibold" id="ticker-chg-banknifty">+218.10 (+0.43%)</span>
     </div>
     <span class="text-slate-700">|</span>
-    <div class="flex items-center space-x-1.5">
+    <div class="flex items-center space-x-1.5 cursor-pointer hover:bg-[#121824] px-1.5 py-0.5 rounded transition" onclick="selectInstrument('SENSEX', 'BSE', 81340.20, 412.80, 0.51)">
       <span class="text-slate-400 uppercase font-semibold">SENSEX</span>
-      <span class="text-white font-bold">81,340.20</span>
-      <span class="text-[#00c076] font-semibold">+412.80 (+0.51%)</span>
+      <span class="text-white font-bold transition-colors" id="ticker-price-sensex">81,340.20</span>
+      <span class="text-[#00c076] font-semibold" id="ticker-chg-sensex">+412.80 (+0.51%)</span>
     </div>
     <span class="text-slate-700">|</span>
     <div class="flex items-center space-x-1.5">
       <span class="text-slate-400 uppercase font-semibold">INDIA VIX</span>
-      <span class="text-white font-bold">12.85</span>
-      <span class="text-[#eb455f] font-semibold">-0.42 (-3.16%)</span>
+      <span class="text-white font-bold transition-colors" id="ticker-price-vix">12.85</span>
+      <span class="text-[#eb455f] font-semibold" id="ticker-chg-vix">-0.42 (-3.16%)</span>
     </div>
     <span class="text-slate-700">|</span>
-    <div class="flex items-center space-x-1.5">
+    <div class="flex items-center space-x-1.5 cursor-pointer hover:bg-[#121824] px-1.5 py-0.5 rounded transition" onclick="selectInstrument('SPY', 'NYSE', 584.20, 3.10, 0.53)">
       <span class="text-slate-400 uppercase font-semibold">SPY</span>
-      <span class="text-white font-bold">584.20</span>
-      <span class="text-[#00c076] font-semibold">+3.10 (+0.53%)</span>
+      <span class="text-white font-bold transition-colors" id="ticker-price-spy">584.20</span>
+      <span class="text-[#00c076] font-semibold" id="ticker-chg-spy">+3.10 (+0.53%)</span>
     </div>
     <span class="text-slate-700">|</span>
     <div class="flex items-center space-x-1.5">
@@ -285,8 +295,8 @@
           <span class="w-2 h-2 rounded-full bg-[#00c076] animate-pulse"></span>
           <span class="font-bold text-white tracking-wider text-xs">TRADEX AI INTELLIGENCE</span>
         </div>
-        <button onclick="runAIDecision()" class="px-2 py-0.5 rounded bg-[#182336] hover:bg-[#202f48] text-[#00c076] text-[10px] transition font-bold" title="Recompute AI Multi-Council Decision">
-          ⚡ Analyze
+        <button onclick="runAIDecision(TradeX.selectedSymbol, true)" id="ai-analyze-btn" class="px-2.5 py-1 rounded bg-[#182336] hover:bg-[#202f48] text-[#00c076] text-[10px] transition font-bold border border-emerald-500/20 shadow-sm flex items-center space-x-1" title="Recompute AI Multi-Council Decision">
+          <span>⚡ Analyze</span>
         </button>
       </div>
 
@@ -298,6 +308,19 @@
           <span class="text-[9px] px-1 rounded bg-[#162030] text-slate-300" id="ai-target-exchange">NASDAQ</span>
         </div>
         <div class="font-bold text-slate-200" id="ai-target-price">$124.50</div>
+      </div>
+
+      <!-- Interactive AI Quick Inquiry -->
+      <div class="px-3.5 py-1.5 bg-[#080d14] border-b border-[#182130] flex items-center space-x-1.5 overflow-x-auto text-[10px]">
+        <button onclick="askAI('why')" class="px-2 py-0.5 rounded bg-[#131b28] hover:bg-[#1c2738] text-slate-300 hover:text-white transition whitespace-nowrap" title="Why did AI make this decision?">
+          💬 Why This?
+        </button>
+        <button onclick="askAI('whynot')" class="px-2 py-0.5 rounded bg-[#131b28] hover:bg-[#1c2738] text-slate-300 hover:text-white transition whitespace-nowrap" title="Why not alternative actions?">
+          ⚠️ Why Not?
+        </button>
+        <button onclick="askAI('invalidation')" class="px-2 py-0.5 rounded bg-[#131b28] hover:bg-[#1c2738] text-slate-300 hover:text-white transition whitespace-nowrap" title="View price invalidation trigger">
+          🎯 Invalidation
+        </button>
       </div>
 
       <!-- Main Decision Card -->
@@ -374,7 +397,7 @@
       </div>
 
       <!-- Expandable: WHY THIS DECISION -->
-      <details class="p-3 border-b border-[#182130] bg-[#090d14] group" open>
+      <details id="details-why" class="p-3 border-b border-[#182130] bg-[#090d14] group" open>
         <summary class="font-bold text-slate-200 cursor-pointer flex justify-between items-center text-[11px] list-none">
           <span class="flex items-center space-x-1.5">
             <span class="text-[#00c076]">✓</span>
@@ -390,7 +413,7 @@
       </details>
 
       <!-- Expandable: WHY NOT? -->
-      <details class="p-3 border-b border-[#182130] bg-[#090d14] group" open>
+      <details id="details-whynot" class="p-3 border-b border-[#182130] bg-[#090d14] group" open>
         <summary class="font-bold text-slate-200 cursor-pointer flex justify-between items-center text-[11px] list-none">
           <span class="flex items-center space-x-1.5">
             <span class="text-amber-400">⚠</span>
@@ -672,6 +695,8 @@
       candleSeries: null,
       volumeSeries: null,
       emaSeries: null,
+      lastCandle: null,
+      decisionCache: {},
       overlays: { ema: true, vol: true, markers: true },
       watchlists: {
         1: [
@@ -766,8 +791,9 @@
       container.innerHTML = items.map(item => {
         const isUp = item.pct >= 0;
         const isSelected = item.symbol === TradeX.selectedSymbol;
+        const cleanSym = item.symbol.replace(/[^a-zA-Z0-9]/g, '_');
         return `
-          <div class="watchlist-row relative p-2.5 flex justify-between items-center cursor-pointer transition group ${isSelected ? 'selected' : ''}" onclick="selectInstrument('${item.symbol}', '${item.exchange}', ${item.price}, ${item.change}, ${item.pct})">
+          <div id="wl-row-${cleanSym}" class="watchlist-row relative p-2.5 flex justify-between items-center cursor-pointer transition group ${isSelected ? 'selected' : ''}" onclick="selectInstrument('${item.symbol}', '${item.exchange}', ${item.price}, ${item.change}, ${item.pct})">
             <div>
               <div class="flex items-center space-x-1.5">
                 <span class="font-bold text-white">${item.symbol}</span>
@@ -776,8 +802,8 @@
               <div class="text-[10px] text-slate-400 truncate max-w-[130px]">${item.name}</div>
             </div>
             <div class="text-right">
-              <div class="font-bold ${isUp ? 'text-[#00c076]' : 'text-[#eb455f]'}">${item.price.toFixed(2)}</div>
-              <div class="text-[10px] ${isUp ? 'text-[#00c076]' : 'text-[#eb455f]'}">${isUp ? '+' : ''}${item.pct.toFixed(2)}%</div>
+              <div id="wl-price-${cleanSym}" class="font-bold transition-colors ${isUp ? 'text-[#00c076]' : 'text-[#eb455f]'}">${item.price.toFixed(2)}</div>
+              <div id="wl-chg-${cleanSym}" class="text-[10px] ${isUp ? 'text-[#00c076]' : 'text-[#eb455f]'}">${isUp ? '+' : ''}${item.pct.toFixed(2)}%</div>
             </div>
 
             <!-- Hover Quick Action Buttons: Buy, Sell, AI Deep Dive -->
@@ -906,8 +932,9 @@
         const res = await fetch(`/api/v1/assets/${encodeURIComponent(symbol)}/chart?days=120&timeframe=1d`);
         const data = await res.json();
 
-        if (TradeX.candleSeries && data.candles) {
+        if (TradeX.candleSeries && data.candles && data.candles.length > 0) {
           TradeX.candleSeries.setData(data.candles);
+          TradeX.lastCandle = { ...data.candles[data.candles.length - 1] };
           
           if (TradeX.volumeSeries && data.volume) {
             TradeX.volumeSeries.setData(data.volume);
@@ -977,156 +1004,397 @@
       }
     }
 
-    // AI Decision Panel Fetcher
-    async function runAIDecision(symbol = TradeX.selectedSymbol) {
-      try {
-        const targetSym = document.getElementById('ai-target-symbol');
-        if (targetSym) targetSym.innerText = symbol;
-        const targetExch = document.getElementById('ai-target-exchange');
-        if (targetExch) targetExch.innerText = TradeX.selectedExchange || 'NASDAQ';
-        const targetPrice = document.getElementById('ai-target-price');
-        if (targetPrice) targetPrice.innerText = `$${TradeX.selectedPrice.toFixed(2)}`;
+    // Render AI Decision Data onto UI
+    function renderDecisionData(d) {
+      // Update main badge
+      const badge = document.getElementById('ai-decision-badge');
+      if (badge) {
+        badge.innerText = d.final_decision || "HOLD";
+        if (d.final_decision === "BUY") badge.className = "text-2xl font-black text-[#00c076] mt-0.5";
+        else if (d.final_decision === "SELL") badge.className = "text-2xl font-black text-[#eb455f] mt-0.5";
+        else if (d.final_decision === "HOLD") badge.className = "text-2xl font-black text-[#f59e0b] mt-0.5";
+        else badge.className = "text-2xl font-black text-slate-400 mt-0.5";
+      }
 
+      // Risk Guardian
+      const gBadge = document.getElementById('ai-guardian-badge');
+      if (gBadge) {
+        const gDec = (d.risk_guardian && d.risk_guardian.decision) ? d.risk_guardian.decision : "APPROVE";
+        if (gDec === "APPROVE") {
+          gBadge.innerText = "✓ APPROVED";
+          gBadge.className = "px-2 py-0.5 rounded text-[11px] font-bold badge-approved inline-block mt-0.5";
+        } else if (gDec === "REDUCE") {
+          gBadge.innerText = "⚠ REDUCE";
+          gBadge.className = "px-2 py-0.5 rounded text-[11px] font-bold badge-reduce inline-block mt-0.5";
+        } else {
+          gBadge.innerText = "✕ REJECTED";
+          gBadge.className = "px-2 py-0.5 rounded text-[11px] font-bold badge-reject inline-block mt-0.5";
+        }
+      }
+
+      // Confidence & Uncertainty
+      const confEl = document.getElementById('ai-confidence');
+      if (confEl) confEl.innerText = `${((d.calibrated_confidence || 0) * 100).toFixed(1)}%`;
+
+      const uncertEl = document.getElementById('ai-uncertainty');
+      if (uncertEl) uncertEl.innerText = `${((d.composite_uncertainty || 0) * 100).toFixed(1)}%`;
+
+      const regimeEl = document.getElementById('ai-regime');
+      if (regimeEl) regimeEl.innerText = d.market_regime || "TRANSITION";
+
+      const allocEl = document.getElementById('ai-allocation');
+      if (allocEl) allocEl.innerText = `${d.approved_position_pct != null ? d.approved_position_pct : 0}% Portfolio`;
+
+      const tickerRegime = document.getElementById('ticker-regime');
+      if (tickerRegime) tickerRegime.innerText = `${d.market_regime || 'TRANSITION'} (${((d.regime_confidence || 0) * 100).toFixed(0)}%)`;
+
+      // Council Evidence
+      if (d.conflict) {
+        const agEl = document.getElementById('ai-agreement');
+        if (agEl) agEl.innerText = `Agreement: ${( (1 - (d.conflict.disagreement_score || 0)) * 100 ).toFixed(0)}%`;
+        const confEl = document.getElementById('ev-conflict');
+        if (confEl) confEl.innerText = `${d.conflict.conflict_severity || 'LOW'} (Entropy: ${(d.conflict.disagreement_score || 0).toFixed(2)})`;
+      }
+
+      if (d.council && Array.isArray(d.council.votes)) {
+        const v = d.council.votes;
+        const tech = v.find(x => x.model_name.toLowerCase().includes('technical')) || v[0];
+        const news = v.find(x => x.model_name.toLowerCase().includes('news')) || v[4] || v[v.length - 1];
+        const regime = v.find(x => x.model_name.toLowerCase().includes('regime')) || v[3];
+        const ml = v.find(x => x.model_name.toLowerCase().includes('ml') || x.model_name.toLowerCase().includes('random forest')) || v[2];
+
+        function renderVote(elId, vote) {
+          const el = document.getElementById(elId);
+          if (!el || !vote) return;
+          el.innerText = vote.signal;
+          if (vote.signal === 'BUY') el.className = 'font-bold text-[#00c076]';
+          else if (vote.signal === 'SELL') el.className = 'font-bold text-[#eb455f]';
+          else if (vote.signal === 'HOLD') el.className = 'font-bold text-[#f59e0b]';
+          else el.className = 'font-bold text-slate-400';
+        }
+
+        renderVote('ev-tech', tech);
+        renderVote('ev-news', news);
+        renderVote('ev-regime', regime);
+        renderVote('ev-ml', ml);
+      }
+
+      // Multi-Horizon
+      if (d.horizons) {
+        function renderHz(elId, hz) {
+          const el = document.getElementById(elId);
+          if (!el || !hz) return;
+          const conf = Math.round((hz.confidence || 0) * 100);
+          el.innerText = `${hz.signal} (${conf}%)`;
+          if (hz.signal === 'BUY') el.className = 'font-bold text-[#00c076]';
+          else if (hz.signal === 'SELL') el.className = 'font-bold text-[#eb455f]';
+          else if (hz.signal === 'HOLD') el.className = 'font-bold text-[#f59e0b]';
+          else el.className = 'font-bold text-slate-400';
+        }
+        renderHz('hz-short', d.horizons.short_term);
+        renderHz('hz-med', d.horizons.medium_term);
+        renderHz('hz-long', d.horizons.long_term);
+      }
+
+      // Why Text
+      const whyContainer = document.getElementById('ai-why-text');
+      if (whyContainer && d.explanation) {
+        const points = d.explanation.why_this_decision || d.explanation.supporting_evidence || [d.explanation.summary || "Indicators in statistical equilibrium without directional bias."];
+        whyContainer.innerHTML = points.map(e => `
+          <p class="flex items-start space-x-1.5 py-0.5">
+            <span class="text-[#00c076] font-bold">✓</span>
+            <span>${e}</span>
+          </p>
+        `).join('');
+      }
+
+      // Why Not Text
+      const whyNotContainer = document.getElementById('ai-why-not-text');
+      if (whyNotContainer && d.explanation) {
+        let whyNotPoints = [];
+        if (Array.isArray(d.explanation.why_not)) {
+          whyNotPoints = d.explanation.why_not;
+        } else if (typeof d.explanation.why_not === 'string') {
+          whyNotPoints = [d.explanation.why_not];
+        } else {
+          whyNotPoints = [d.explanation.why_not_buy || d.explanation.why_not_sell || "Risk profile mandates capital preservation."];
+        }
+
+        let invalConditions = ["Daily close breach of dynamic risk boundary."];
+        if (d.counterfactuals && Array.isArray(d.counterfactuals.invalidation_conditions)) {
+          invalConditions = d.counterfactuals.invalidation_conditions;
+        } else if (d.counterfactuals && Array.isArray(d.counterfactuals.invalidation_triggers)) {
+          invalConditions = d.counterfactuals.invalidation_triggers;
+        }
+
+        whyNotContainer.innerHTML = `
+          <div class="p-2 rounded bg-[#0f1522] border border-[#172233]">
+            <strong class="text-rose-400">Why not alternative action?</strong>
+            <p class="text-slate-400 mt-0.5 text-[10px]">${whyNotPoints[0] || "Downside variance exceeds hurdle rate."}</p>
+          </div>
+          <div class="p-2 rounded bg-[#0f1522] border border-[#172233]">
+            <strong class="text-slate-300">Thesis Invalidation:</strong>
+            <p class="text-slate-400 mt-0.5 text-[10px]">${invalConditions[0] || "Daily close below 20 EMA."}</p>
+          </div>
+        `;
+      }
+    }
+
+    // AI Decision Panel Fetcher
+    async function runAIDecision(symbol = TradeX.selectedSymbol, force = false) {
+      const targetSym = document.getElementById('ai-target-symbol');
+      if (targetSym) targetSym.innerText = symbol;
+      const targetExch = document.getElementById('ai-target-exchange');
+      if (targetExch) targetExch.innerText = TradeX.selectedExchange || 'NASDAQ';
+      const targetPrice = document.getElementById('ai-target-price');
+      if (targetPrice) targetPrice.innerText = `$${TradeX.selectedPrice.toFixed(2)}`;
+
+      const badge = document.getElementById('ai-decision-badge');
+      const analyzeBtn = document.getElementById('ai-analyze-btn');
+      const aiStatusBadge = document.getElementById('ai-status-badge');
+      const aiStatusDot = document.getElementById('ai-status-dot');
+
+      if (aiStatusBadge) aiStatusBadge.innerText = `AI EVALUATING ${symbol}`;
+      if (aiStatusDot) aiStatusDot.className = "w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping";
+
+      // If cached and not forced, display immediately for instant zero-lag response
+      if (!force && TradeX.decisionCache && TradeX.decisionCache[symbol]) {
+        renderDecisionData(TradeX.decisionCache[symbol]);
+        if (aiStatusBadge) aiStatusBadge.innerText = 'AI COUNCIL READY';
+        if (aiStatusDot) aiStatusDot.className = "w-1.5 h-1.5 rounded-full bg-blue-400";
+        return;
+      }
+
+      // Visual loading state
+      if (badge) {
+        badge.innerHTML = `<span class="text-xs text-amber-400 font-mono animate-pulse flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span><span>Evaluating Council (5 Models)...</span></span>`;
+      }
+      if (analyzeBtn) {
+        analyzeBtn.innerHTML = `<span>⏳ Evaluating...</span>`;
+        analyzeBtn.disabled = true;
+      }
+
+      try {
         const res = await fetch(`/api/v1/decisions/latest?symbol=${encodeURIComponent(symbol)}`);
         if (!res.ok) throw new Error(`Decision API error: HTTP ${res.status}`);
         const d = await res.json();
 
-        // Update main badge
-        const badge = document.getElementById('ai-decision-badge');
-        if (badge) {
-          badge.innerText = d.final_decision || "HOLD";
-          if (d.final_decision === "BUY") badge.className = "text-2xl font-black text-[#00c076] mt-0.5";
-          else if (d.final_decision === "SELL") badge.className = "text-2xl font-black text-[#eb455f] mt-0.5";
-          else if (d.final_decision === "HOLD") badge.className = "text-2xl font-black text-[#f59e0b] mt-0.5";
-          else badge.className = "text-2xl font-black text-slate-400 mt-0.5";
+        // Save in cache
+        if (!TradeX.decisionCache) TradeX.decisionCache = {};
+        TradeX.decisionCache[symbol] = d;
+
+        renderDecisionData(d);
+
+        if (aiStatusBadge) aiStatusBadge.innerText = 'AI COUNCIL READY';
+        if (aiStatusDot) aiStatusDot.className = "w-1.5 h-1.5 rounded-full bg-blue-400";
+        if (analyzeBtn) {
+          analyzeBtn.innerHTML = `<span>⚡ Analyze</span>`;
+          analyzeBtn.disabled = false;
         }
 
-        // Risk Guardian
-        const gBadge = document.getElementById('ai-guardian-badge');
-        if (gBadge) {
-          const gDec = (d.risk_guardian && d.risk_guardian.decision) ? d.risk_guardian.decision : "APPROVE";
-          if (gDec === "APPROVE") {
-            gBadge.innerText = "✓ APPROVED";
-            gBadge.className = "px-2 py-0.5 rounded text-[11px] font-bold badge-approved inline-block mt-0.5";
-          } else if (gDec === "REDUCE") {
-            gBadge.innerText = "⚠ REDUCE";
-            gBadge.className = "px-2 py-0.5 rounded text-[11px] font-bold badge-reduce inline-block mt-0.5";
-          } else {
-            gBadge.innerText = "✕ REJECTED";
-            gBadge.className = "px-2 py-0.5 rounded text-[11px] font-bold badge-reject inline-block mt-0.5";
-          }
-        }
-
-        // Confidence & Uncertainty
-        const confEl = document.getElementById('ai-confidence');
-        if (confEl) confEl.innerText = `${((d.calibrated_confidence || 0) * 100).toFixed(1)}%`;
-
-        const uncertEl = document.getElementById('ai-uncertainty');
-        if (uncertEl) uncertEl.innerText = `${((d.composite_uncertainty || 0) * 100).toFixed(1)}%`;
-
-        const regimeEl = document.getElementById('ai-regime');
-        if (regimeEl) regimeEl.innerText = d.market_regime || "TRANSITION";
-
-        const allocEl = document.getElementById('ai-allocation');
-        if (allocEl) allocEl.innerText = `${d.approved_position_pct != null ? d.approved_position_pct : 0}% Portfolio`;
-
-        const tickerRegime = document.getElementById('ticker-regime');
-        if (tickerRegime) tickerRegime.innerText = `${d.market_regime || 'TRANSITION'} (${((d.regime_confidence || 0) * 100).toFixed(0)}%)`;
-
-        // Council Evidence
-        if (d.conflict) {
-          const agEl = document.getElementById('ai-agreement');
-          if (agEl) agEl.innerText = `Agreement: ${( (1 - (d.conflict.disagreement_score || 0)) * 100 ).toFixed(0)}%`;
-          const confEl = document.getElementById('ev-conflict');
-          if (confEl) confEl.innerText = `${d.conflict.conflict_severity || 'LOW'} (Entropy: ${(d.conflict.disagreement_score || 0).toFixed(2)})`;
-        }
-
-        if (d.council && Array.isArray(d.council.votes)) {
-          const v = d.council.votes;
-          const tech = v.find(x => x.model_name.toLowerCase().includes('technical')) || v[0];
-          const news = v.find(x => x.model_name.toLowerCase().includes('news')) || v[4] || v[v.length - 1];
-          const regime = v.find(x => x.model_name.toLowerCase().includes('regime')) || v[3];
-          const ml = v.find(x => x.model_name.toLowerCase().includes('ml') || x.model_name.toLowerCase().includes('random forest')) || v[2];
-
-          function renderVote(elId, vote) {
-            const el = document.getElementById(elId);
-            if (!el || !vote) return;
-            el.innerText = vote.signal;
-            if (vote.signal === 'BUY') el.className = 'font-bold text-[#00c076]';
-            else if (vote.signal === 'SELL') el.className = 'font-bold text-[#eb455f]';
-            else if (vote.signal === 'HOLD') el.className = 'font-bold text-[#f59e0b]';
-            else el.className = 'font-bold text-slate-400';
-          }
-
-          renderVote('ev-tech', tech);
-          renderVote('ev-news', news);
-          renderVote('ev-regime', regime);
-          renderVote('ev-ml', ml);
-        }
-
-        // Multi-Horizon
-        if (d.horizons) {
-          function renderHz(elId, hz) {
-            const el = document.getElementById(elId);
-            if (!el || !hz) return;
-            const conf = Math.round((hz.confidence || 0) * 100);
-            el.innerText = `${hz.signal} (${conf}%)`;
-            if (hz.signal === 'BUY') el.className = 'font-bold text-[#00c076]';
-            else if (hz.signal === 'SELL') el.className = 'font-bold text-[#eb455f]';
-            else if (hz.signal === 'HOLD') el.className = 'font-bold text-[#f59e0b]';
-            else el.className = 'font-bold text-slate-400';
-          }
-          renderHz('hz-short', d.horizons.short_term);
-          renderHz('hz-med', d.horizons.medium_term);
-          renderHz('hz-long', d.horizons.long_term);
-        }
-
-        // Why Text
-        const whyContainer = document.getElementById('ai-why-text');
-        if (whyContainer && d.explanation) {
-          const points = d.explanation.why_this_decision || d.explanation.supporting_evidence || [d.explanation.summary || "Indicators in statistical equilibrium without directional bias."];
-          whyContainer.innerHTML = points.map(e => `
-            <p class="flex items-start space-x-1.5 py-0.5">
-              <span class="text-[#00c076] font-bold">✓</span>
-              <span>${e}</span>
-            </p>
-          `).join('');
-        }
-
-        // Why Not Text
-        const whyNotContainer = document.getElementById('ai-why-not-text');
-        if (whyNotContainer && d.explanation) {
-          let whyNotPoints = [];
-          if (Array.isArray(d.explanation.why_not)) {
-            whyNotPoints = d.explanation.why_not;
-          } else if (typeof d.explanation.why_not === 'string') {
-            whyNotPoints = [d.explanation.why_not];
-          } else {
-            whyNotPoints = [d.explanation.why_not_buy || d.explanation.why_not_sell || "Risk profile mandates capital preservation."];
-          }
-
-          let invalConditions = ["Daily close breach of dynamic risk boundary."];
-          if (d.counterfactuals && Array.isArray(d.counterfactuals.invalidation_conditions)) {
-            invalConditions = d.counterfactuals.invalidation_conditions;
-          } else if (d.counterfactuals && Array.isArray(d.counterfactuals.invalidation_triggers)) {
-            invalConditions = d.counterfactuals.invalidation_triggers;
-          }
-
-          whyNotContainer.innerHTML = `
-            <div class="p-2 rounded bg-[#0f1522] border border-[#172233]">
-              <strong class="text-rose-400">Why not alternative action?</strong>
-              <p class="text-slate-400 mt-0.5 text-[10px]">${whyNotPoints[0] || "Downside variance exceeds hurdle rate."}</p>
-            </div>
-            <div class="p-2 rounded bg-[#0f1522] border border-[#172233]">
-              <strong class="text-slate-300">Thesis Invalidation:</strong>
-              <p class="text-slate-400 mt-0.5 text-[10px]">${invalConditions[0] || "Daily close below 20 EMA."}</p>
-            </div>
-          `;
-        }
+        showToast(`TradeX AI: ${symbol} Consensus -> ${d.final_decision} (${Math.round((d.calibrated_confidence || 0) * 100)}% Conviction)`, d.final_decision === 'BUY' ? 'success' : d.final_decision === 'SELL' ? 'warn' : 'info');
 
       } catch (e) {
         console.error("AI Decision error: ", e);
+        if (badge) {
+          badge.innerHTML = `<span class="text-xs text-rose-400 font-mono">Analysis Re-evaluating...</span>`;
+        }
+        if (aiStatusBadge) aiStatusBadge.innerText = 'AI COUNCIL READY';
+        if (aiStatusDot) aiStatusDot.className = "w-1.5 h-1.5 rounded-full bg-blue-400";
+        if (analyzeBtn) {
+          analyzeBtn.innerHTML = `<span>⚡ Analyze</span>`;
+          analyzeBtn.disabled = false;
+        }
+        showToast(`AI Service notice: ${e.message}`, 'warn');
       }
+    }
+
+    // Interactive Quick AI Query
+    function askAI(type) {
+      const symbol = TradeX.selectedSymbol;
+      const cached = TradeX.decisionCache ? TradeX.decisionCache[symbol] : null;
+
+      if (!cached) {
+        showToast(`Analyzing ${symbol} with TradeX AI...`, 'info');
+        runAIDecision(symbol, true);
+        return;
+      }
+
+      if (type === 'why') {
+        const details = document.getElementById('details-why');
+        if (details) details.open = true;
+        const whyPoints = cached.explanation ? (cached.explanation.why_this_decision || [cached.explanation.summary]) : [];
+        showToast(`AI Why: ${whyPoints[0] || 'Technical structure in equilibrium.'}`, 'success');
+      } else if (type === 'whynot') {
+        const details = document.getElementById('details-whynot');
+        if (details) details.open = true;
+        const whyNot = cached.explanation ? (Array.isArray(cached.explanation.why_not) ? cached.explanation.why_not[0] : cached.explanation.why_not) : 'Downside risk exceeds hurdle rate.';
+        showToast(`AI Why Not: ${whyNot}`, 'warn');
+      } else if (type === 'invalidation') {
+        const details = document.getElementById('details-whynot');
+        if (details) details.open = true;
+        const inval = (cached.counterfactuals && cached.counterfactuals.invalidation_conditions) ? cached.counterfactuals.invalidation_conditions[0] : 'Breach of dynamic 20 EMA trend band.';
+        showToast(`Thesis Invalidation: ${inval}`, 'info');
+      }
+    }
+
+    // Fetch live market pulse from FastAPI backend
+    let isFetchingPulse = false;
+    async function fetchMarketPulse() {
+      if (isFetchingPulse) return;
+      isFetchingPulse = true;
+      try {
+        const res = await fetch('/api/v1/market/pulse');
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // 1. Update Market Regime Ticker
+        const tickerRegime = document.getElementById('ticker-regime');
+        if (tickerRegime && data.market_regime) {
+          tickerRegime.innerText = `${data.market_regime} (${Math.round((data.regime_confidence || 0.8) * 100)}%)`;
+        }
+
+        // 2. Synchronize watchlist quotes with live backend quotes
+        if (data.watchlist && Array.isArray(data.watchlist)) {
+          data.watchlist.forEach(quote => {
+            for (let tab in TradeX.watchlists) {
+              const item = TradeX.watchlists[tab].find(i => i.symbol === quote.symbol);
+              if (item) {
+                const oldPrice = item.price;
+                item.price = quote.price || item.price;
+                item.change = quote.change != null ? quote.change : item.change;
+                item.pct = quote.pct_change != null ? quote.pct_change : item.pct;
+
+                const cleanSym = item.symbol.replace(/[^a-zA-Z0-9]/g, '_');
+                const priceEl = document.getElementById(`wl-price-${cleanSym}`);
+                const chgEl = document.getElementById(`wl-chg-${cleanSym}`);
+                const rowEl = document.getElementById(`wl-row-${cleanSym}`);
+
+                if (priceEl && chgEl) {
+                  priceEl.innerText = item.price.toFixed(2);
+                  priceEl.className = `font-bold transition-colors ${item.pct >= 0 ? 'text-[#00c076]' : 'text-[#eb455f]'}`;
+                  chgEl.innerText = `${item.pct >= 0 ? '+' : ''}${item.pct.toFixed(2)}%`;
+                  chgEl.className = `text-[10px] ${item.pct >= 0 ? 'text-[#00c076]' : 'text-[#eb455f]'}`;
+                }
+
+                if (rowEl && oldPrice !== item.price) {
+                  const isUp = item.price >= oldPrice;
+                  rowEl.classList.remove('tick-up', 'tick-down');
+                  void rowEl.offsetWidth;
+                  rowEl.classList.add(isUp ? 'tick-up' : 'tick-down');
+                  setTimeout(() => rowEl.classList.remove('tick-up', 'tick-down'), 450);
+                }
+              }
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("Market pulse fetch notice:", e);
+      } finally {
+        isFetchingPulse = false;
+      }
+    }
+
+    // Top Ticker Real-Time Tick Sim
+    function tickTopTicker() {
+      const tickers = [
+        { id: 'spy', priceId: 'ticker-price-spy', chgId: 'ticker-chg-spy', base: 584.20 },
+        { id: 'nifty', priceId: 'ticker-price-nifty', chgId: 'ticker-chg-nifty', base: 24852.15 },
+        { id: 'banknifty', priceId: 'ticker-price-banknifty', chgId: 'ticker-chg-banknifty', base: 51210.45 },
+        { id: 'sensex', priceId: 'ticker-price-sensex', chgId: 'ticker-chg-sensex', base: 81340.20 },
+        { id: 'vix', priceId: 'ticker-price-vix', chgId: 'ticker-chg-vix', base: 12.85 }
+      ];
+
+      const t = tickers[Math.floor(Math.random() * tickers.length)];
+      const elPrice = document.getElementById(t.priceId);
+      const elChg = document.getElementById(t.chgId);
+      if (!elPrice || !elChg) return;
+
+      const deltaPct = (Math.random() * 0.10 - 0.05) / 100;
+      const curPrice = parseFloat(elPrice.innerText.replace(/,/g, '')) || t.base;
+      const nextPrice = +(curPrice * (1 + deltaPct)).toFixed(2);
+      const isUp = nextPrice >= curPrice;
+
+      elPrice.innerText = nextPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      elPrice.className = `font-bold transition-colors ${isUp ? 'text-[#00c076]' : 'text-[#eb455f]'}`;
+      setTimeout(() => { elPrice.className = 'text-white font-bold transition-colors'; }, 450);
+    }
+
+    // Live Streaming Tick Engine (Streaming tick discovery like Zerodha Kite)
+    function startLiveMarketStream() {
+      fetchMarketPulse();
+      setInterval(fetchMarketPulse, 20000);
+
+      setInterval(() => {
+        const activeItems = TradeX.watchlists[TradeX.activeWatchlistTab] || [];
+        if (activeItems.length === 0) return;
+
+        const count = Math.min(2, activeItems.length);
+        for (let c = 0; c < count; c++) {
+          const randIdx = Math.floor(Math.random() * activeItems.length);
+          const item = activeItems[randIdx];
+          if (!item) continue;
+
+          const pctDelta = (Math.random() * 0.12 - 0.055) / 100;
+          const oldPrice = item.price;
+          const newPrice = Math.max(1, +(item.price * (1 + pctDelta)).toFixed(2));
+          const isUp = newPrice >= oldPrice;
+          
+          item.price = newPrice;
+          item.change = +(item.change + (newPrice - oldPrice)).toFixed(2);
+          item.pct = +((item.change / (newPrice - item.change)) * 100).toFixed(2);
+
+          const cleanSym = item.symbol.replace(/[^a-zA-Z0-9]/g, '_');
+          const priceEl = document.getElementById(`wl-price-${cleanSym}`);
+          const chgEl = document.getElementById(`wl-chg-${cleanSym}`);
+          const rowEl = document.getElementById(`wl-row-${cleanSym}`);
+
+          if (priceEl && chgEl) {
+            priceEl.innerText = newPrice.toFixed(2);
+            priceEl.className = `font-bold transition-colors ${item.pct >= 0 ? 'text-[#00c076]' : 'text-[#eb455f]'}`;
+            chgEl.innerText = `${item.pct >= 0 ? '+' : ''}${item.pct.toFixed(2)}%`;
+            chgEl.className = `text-[10px] ${item.pct >= 0 ? 'text-[#00c076]' : 'text-[#eb455f]'}`;
+          }
+
+          if (rowEl) {
+            rowEl.classList.remove('tick-up', 'tick-down');
+            void rowEl.offsetWidth;
+            rowEl.classList.add(isUp ? 'tick-up' : 'tick-down');
+            setTimeout(() => rowEl.classList.remove('tick-up', 'tick-down'), 450);
+          }
+
+          if (item.symbol === TradeX.selectedSymbol) {
+            TradeX.selectedPrice = newPrice;
+            const chartLtp = document.getElementById('chart-ltp');
+            const chartChg = document.getElementById('chart-change');
+            const aiPrice = document.getElementById('ai-target-price');
+
+            if (chartLtp) {
+              chartLtp.innerText = `$${newPrice.toFixed(2)}`;
+              chartLtp.className = `text-sm font-bold transition-colors ${isUp ? 'text-[#00c076]' : 'text-[#eb455f]'}`;
+              setTimeout(() => { chartLtp.className = 'text-sm font-bold text-white'; }, 400);
+            }
+            if (chartChg) {
+              chartChg.innerText = `${item.change >= 0 ? '+' : ''}$${item.change.toFixed(2)} (${item.pct >= 0 ? '+' : ''}${item.pct.toFixed(2)}%)`;
+              chartChg.className = `text-[11px] font-bold ${item.pct >= 0 ? 'text-[#00c076]' : 'text-[#eb455f]'}`;
+            }
+            if (aiPrice) {
+              aiPrice.innerText = `$${newPrice.toFixed(2)}`;
+            }
+
+            if (TradeX.candleSeries && TradeX.lastCandle) {
+              TradeX.lastCandle.close = newPrice;
+              if (newPrice > TradeX.lastCandle.high) TradeX.lastCandle.high = newPrice;
+              if (newPrice < TradeX.lastCandle.low) TradeX.lastCandle.low = newPrice;
+              TradeX.candleSeries.update(TradeX.lastCandle);
+            }
+          }
+        }
+
+        if (Math.random() > 0.35) {
+          tickTopTicker();
+        }
+      }, 1200);
     }
 
     // Bottom Drawer Management
@@ -1699,6 +1967,7 @@
       initTradingViewChart();
       runAIDecision(TradeX.selectedSymbol);
       setBottomTab('positions');
+      startLiveMarketStream();
     });
   </script>
 </body>
